@@ -33,9 +33,13 @@ def names_to_string(teams: list):
 def add_team(series: dict, team: dict):
     """Lisää joukkueen sarjaan, arpoo joukkueelle uuden id:n jos id:tä ei ole"""
     if team['id'] == -1:
-        team['id'] = generate_random_id(parse_teams(load_data(local=True)))
+        team['id'] = generate_random_id(parse_teams(load_data(remote=False)))
     series['joukkueet'].append(team)
 
+def remove_team(series: dict, team_name: str):
+    print(team_name)
+    teams = [team for team in series['joukkueet'] if team['nimi'] != team_name]
+    series['joukkueet'] = teams
 
 def generate_random_id(teams: list, iter: int=0):
     """Luo joukkueelle uniikin id:n"""

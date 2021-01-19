@@ -6,13 +6,13 @@ import urllib.request
 DATA_REMOTE_URL = "http://hazor.eu.pythonanywhere.com/2021/data.json"
 DATA_FILENAME = "data.json"
 
-def load_data(local=False) -> dict:
+def load_data(remote=False) -> dict:
     """Lataa json-muotoisen datan ja muuntaa sen pythonin dictionaryksi """
-    if local:
+    if remote:
+        data = _reset_data()
+    else:
         with open(DATA_FILENAME, encoding="UTF-8", mode="r") as file:
             data = json.load(file)
-    else:
-        data = _reset_data()
 
     return data
 

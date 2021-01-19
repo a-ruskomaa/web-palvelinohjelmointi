@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 
 from vt.data.data import load_data, save_data
-from vt.data.teams import parse_teams, add_team, names_to_string, Joukkue
+from vt.data.teams import parse_teams, add_team, remove_team, names_to_string, Joukkue
 from vt.data.checkpoints import checkpoints_to_string
 from vt.data.series import get_series_by_name
 from vt.helper import return_text
@@ -13,11 +13,17 @@ bp = Blueprint('vt1', __name__, url_prefix='/vt1')
 def res():
     rows = []
 
-    data = load_data()
+    reset_data = bool(request.args.get('reset', 0))
+
+    data = load_data(remote=reset_data)
     
     parsed = parse_team_from_arguments(request.args, data)
     if parsed:
-        add_team(parsed[0], parsed[1].__dict__)
+        tila = request.args.get('tila', 'insert')
+        if tila == 'insert':
+            add_team(parsed[0], parsed[1].__dict__)
+        elif tila == 'delete':
+            remove_team(parsed[0], parsed[1].nimi)
         save_data(data)
 
     rows.append(vt1_response(data))
@@ -36,6 +42,7 @@ def parse_team_from_arguments(args, data):
 
             return (series, team)
     return None
+
 
 
 def vt1_response(data):
