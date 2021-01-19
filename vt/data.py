@@ -13,3 +13,13 @@ def download_data(location=DATA_LOCATION) -> dict:
     with urllib.request.urlopen(location) as response:
         data = json.load(response)
         return data
+
+
+def parse_teams(data: dict):
+    teams = []
+
+    for sarja in data['sarjat']:
+        for joukkue in sarja['joukkueet']:
+            teams.append(joukkue)
+
+    return teams
