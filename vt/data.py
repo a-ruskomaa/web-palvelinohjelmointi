@@ -16,6 +16,7 @@ def download_data(location=DATA_LOCATION) -> dict:
 
 
 def parse_teams(data: dict):
+    """Parsii datasta kaikki joukkueet tiedot ja palauttaa ne listalla"""
     teams = []
 
     for sarja in data['sarjat']:
@@ -23,3 +24,10 @@ def parse_teams(data: dict):
             teams.append(joukkue)
 
     return teams
+
+
+def names_to_string(teams: list):
+    """Muodostaa joukkueiden nimistä merkkijonon, jossa joukkueet
+    ovat aakkosjärjestyksessä rivinvaihdoilla erotettuna"""
+    return "\n".join(sorted(map(lambda team: team['nimi'], teams), key=lambda name: name.lower()))
+
