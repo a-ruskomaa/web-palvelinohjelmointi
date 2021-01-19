@@ -1,5 +1,5 @@
 class Joukkue:
-    def __init__(self, id: str, nimi: str, jasenet: list=[], leimaustapa: list=[], rastit: list=[]):
+    def __init__(self, nimi: str, jasenet: list=[], id: int=-1, leimaustapa: list=[], rastit: list=[]):
         self.nimi = nimi
         self.jasenet = jasenet
         self.id = id
