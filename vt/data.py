@@ -4,17 +4,27 @@ import os
 import random
 import urllib.request
 
-# def hello(name):
-#     return f"Hello {name}"
+DATA_REMOTE_URL = "http://hazor.eu.pythonanywhere.com/2021/data.json"
+DATA_FILENAME = "data.json"
 
-DATA_LOCATION = "http://hazor.eu.pythonanywhere.com/2021/data.json"
-
-def download_data(location=DATA_LOCATION) -> dict:
+def load_data(local=False) -> dict:
     """Lataa json-muotoisen datan ja muuntaa sen pythonin dictionaryksi """
-    with urllib.request.urlopen(location) as response:
-        data = json.load(response)
-        return data
+    if local:
+        with open(DATA_FILENAME, encoding="UTF-8", mode="r") as file:
+            data = json.load(file)
+    else:
+        data = reset_data()
 
+    return data
+
+def reset_data():
+    with urllib.request.urlopen(DATA_REMOTE_URL) as response:
+        data = json.load(response)
+
+    with open(DATA_FILENAME, encoding="UTF-8", mode="w") as file:
+        json.dump(data, file, ensure_ascii=False)
+
+    return data
 
 def parse_teams(data: dict):
     """Parsii datasta kaikki joukkueet tiedot ja palauttaa ne listalla"""
@@ -27,22 +37,36 @@ def parse_teams(data: dict):
     return teams
 
 
+def get_series_by_name(name: str):
+    data = load_data(local=True)
+
+
 def names_to_string(teams: list):
     """Muodostaa joukkueiden nimistä merkkijonon, jossa joukkueet
     ovat aakkosjärjestyksessä rivinvaihdoilla erotettuna"""
     return "\n".join(sorted(map(lambda team: team['nimi'], teams), key=lambda name: name.lower()))
 
 
+def checkpoints_to_string(checkpoints: list):
+    """Palauttaa kaikki kokonaisluvulla alkavat rastikoodit yhtenä merkkijonona"""
+    def filter_checkpoints(checkpoint) -> bool:
+        """Suodatetaan rasteista pois rastit joiden koodin ensimmäinen merkki ei ole numero"""
+        try:
+            int(checkpoint['koodi'][0])
+            return True
+        except ValueError:
+            return False
+        
+    return ";".join(map(lambda cp: cp['koodi'], filter(filter_checkpoints, checkpoints)))
+
+
 def add_team(series: dict, team: dict):
+    """Lisää joukkueen sarjaan, arpoo joukkueelle uuden id:n jos id:tä ei ole"""
     print(team)
     if team['id'] == -1:
-        team['id'] = generate_random_id(parse_teams(download_data()))
+        team['id'] = generate_random_id(parse_teams(load_data(local=True)))
     print(team)
     series['joukkueet'].append(team)
-
-
-def find_max_id(teams: list):
-    return max(map(lambda team: team['id'], teams))
 
 
 def generate_random_id(teams: list, iter: int=0):
