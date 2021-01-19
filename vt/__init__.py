@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask, request
+from flask.helpers import send_from_directory
 
 
 def create_app(test_config=None):
@@ -17,5 +18,13 @@ def create_app(test_config=None):
     # rekisteröidään viikkotehtävien polut blueprinteina selkeyttämään koodia
     from . import vt1
     app.register_blueprint(vt1.bp)
+
+    @app.route('/')
+    def hello():
+        return "Hello!"
+        
+    @app.route('/data.json')
+    def download_data():
+        return send_from_directory('../', 'data.json')
 
     return app
