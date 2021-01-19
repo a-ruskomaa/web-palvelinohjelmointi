@@ -1,10 +1,12 @@
 from flask import Blueprint, request
 
-from . import data
+from vt.data import hello
+from vt.helper import return_text
 
 bp = Blueprint('vt1', __name__, url_prefix='/vt1')
 
 @bp.route('/', methods=['GET'], strict_slashes=False)
-def hello():
+@return_text
+def res():
     name = request.args.get('name')
-    return data.hello(name)
+    return hello(name)
