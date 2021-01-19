@@ -34,6 +34,10 @@ def names_to_string(teams: list):
 
 
 def add_team(series: dict, team: dict):
+    print(team)
+    if team['id'] == -1:
+        team['id'] = generate_random_id(parse_teams(download_data()))
+    print(team)
     series['joukkueet'].append(team)
 
 
