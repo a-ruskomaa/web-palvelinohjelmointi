@@ -79,7 +79,7 @@ def stage3_response(data):
 
     # Tulostellaan jokaisen joukkueen ja jäsenen tiedot
     for team in teams:
-        rows.append(f"{team[1]} ({team[0]})")
+        rows.append(f"{team[1]} ({team[0]} p)")
         for member in team[2]:
             rows.append(f"  {member}")
 
