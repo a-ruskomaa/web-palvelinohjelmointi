@@ -44,7 +44,8 @@ def parse_team_from_arguments(args, data):
         series = get_series_by_name(series_name, data)
         if series:
             members = request.args.getlist('jasen')
-            team = Joukkue(nimi=name, jasenet=members)
+            punching_methods = [data['leimaustapa'].index(x) for x in request.args.getlist('leimaustapa')]
+            team = Joukkue(nimi=name, jasenet=members, leimaustapa=punching_methods)
 
             return (series, team)
     return None
