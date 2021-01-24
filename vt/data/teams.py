@@ -164,7 +164,7 @@ def _is_valid_punch(punch, start_end_punches: dict, punched_checkpoints: set):
     return valid
 
 
-def print_teams(teams: list):
+def print_team(teams: list):
     """Muodostaa joukkueiden nimistä merkkijonon, jossa joukkueet
     ovat aakkosjärjestyksessä rivinvaihdoilla erotettuna"""
 
@@ -173,3 +173,5 @@ def print_teams(teams: list):
         rows.append(f"{team['name']}, points: {calculate_points(team)}")
 
     return rows
+
+
