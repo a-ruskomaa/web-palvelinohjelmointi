@@ -1,5 +1,7 @@
 import random
+from datetime import date, datetime
 from vt.data.data import load_data
+from vt.data.checkpoints import find_checkpoint_by_id, get_points
 
 class Joukkue:
     def __init__(self, nimi: str, jasenet: list=[], id: int=-1,  leimaustapa: list=[], rastit: list=[]):
@@ -54,3 +56,92 @@ def generate_random_id(teams: list, iter: int=0):
         rdm = generate_random_id(teams, iter + 1)
 
     return rdm
+
+def calculate_points(team: dict, checkpoints: list):
+    #TODO reduce
+
+    print("parsing punches for: " + team['nimi'])
+    parsed_punches = parse_punches(team['rastit'], checkpoints)
+
+    print()
+    print(f"{team['nimi']}: rastit:")
+    print(parsed_punches)
+
+    total = 0
+    for punch in parsed_punches:
+        total += get_points(punch[1])
+
+    return total
+
+
+def parse_punches(punches: list, checkpoints: list):
+    # TODO generator expression
+    punched_checkpoints = set()
+    parsed_punches = []
+    valid_punches = []
+
+    for punch in punches:
+        checkpoint = find_checkpoint_by_id(punch['rasti'], checkpoints)
+        if checkpoint:
+            parsed_punches.append((punch['aika'], checkpoint['koodi'], checkpoint['lat'], checkpoint['lon']))
+
+    start_end_timestamps = _get_start_end_punches(parsed_punches)
+
+    for punch in parsed_punches:
+        if _is_valid_punch(punch, start_end_timestamps, punched_checkpoints):
+            valid_punches.append(punch)
+
+    return valid_punches
+
+def _is_valid_punch(punch, start_end_punches: dict, punched_checkpoints: set):
+    if punch[1] in punched_checkpoints:
+        return False
+
+    timestamp = datetime.fromisoformat(punch[0])
+    start = start_end_punches['start'][1]
+    end = start_end_punches['end'][1]
+
+    print(f"{timestamp}, start={start}, end={end}")
+    valid = start < timestamp < end
+    if valid:
+        punched_checkpoints.add(punch[1])
+
+    return valid
+
+
+def _get_start_end_punches(parsed_punches: list):
+    start_datetime = None
+    start_punch = None
+    end_datetime = None
+    end_punch = None
+
+    for punch in parsed_punches:
+        if punch[1] == 'LAHTO':
+            start_timestamp = punch[0]
+            temp_datetime = datetime.fromisoformat(start_timestamp) if start_timestamp else None
+            if (not start_datetime or temp_datetime > start_datetime):
+                start_datetime = temp_datetime
+                start_punch = punch
+
+    if start_datetime:
+        for punch in parsed_punches:
+            if punch[1] == 'MAALI':
+                end_timestamp = punch[0]
+                temp_datetime = datetime.fromisoformat(end_timestamp) if end_timestamp else None
+                if (temp_datetime > start_datetime and (not end_datetime or temp_datetime < end_datetime)):
+                    end_datetime = temp_datetime
+                    end_punch = punch
+
+    return {
+        'start': (start_punch, start_datetime),
+        'end': (end_punch, end_datetime)}
+
+def print_teams(teams: list):
+    """Muodostaa joukkueiden nimistä merkkijonon, jossa joukkueet
+    ovat aakkosjärjestyksessä rivinvaihdoilla erotettuna"""
+
+    rows = []
+    for team in teams:
+        rows.append(f"{team['name']}, points: {calculate_points(team)}")
+
+    return rows

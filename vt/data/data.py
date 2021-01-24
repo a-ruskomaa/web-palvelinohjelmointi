@@ -23,7 +23,7 @@ def save_data(data):
 
 def _reset_data():
     """Lataa oletusdatan palvelimelta ja korvaa sillä paikallisen datan"""
-    # TODO virheenkäsittely 
+    # TODO virheenkäsittely jos ei vastausta
     with urllib.request.urlopen(DATA_REMOTE_URL) as response:
         data = json.load(response)
         save_data(data)

@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 
 from vt.data.data import load_data, save_data
-from vt.data.teams import parse_teams, add_team, remove_team, names_to_string, Joukkue
+from vt.data.teams import parse_teams, add_team, remove_team, names_to_string, calculate_points, Joukkue
 from vt.data.checkpoints import checkpoints_to_string
 from vt.data.series import get_series_by_name
 from vt.helper import return_text
@@ -26,7 +26,8 @@ def res():
             remove_team(parsed[0], parsed[1].nimi)
         save_data(data)
 
-    rows.append(vt1_response(data))
+    rows.append(stage1_response(data))
+    rows.append(stage3_response(data))
 
     return "\n".join(rows)
 
@@ -44,11 +45,10 @@ def parse_team_from_arguments(args, data):
     return None
 
 
-
-def vt1_response(data):
+def stage1_response(data):
     rows = []
     rows.append("----------- TASO 1 -----------")
-    # virheenkäsittely
+    # TODO virheenkäsittely
     teams = parse_teams(data)
     rows.append(names_to_string(teams))
 
@@ -56,4 +56,17 @@ def vt1_response(data):
 
     rows.append(checkpoints_to_string(data['rastit']))
 
+    return "\n".join(rows)
+
+
+def stage3_response(data):
+    rows = []
+    rows.append("----------- TASO 3 -----------")
+
+    checkpoints = data['rastit']
+    
+    teams = parse_teams(data)
+    for team in teams:
+        rows.append(f"{team['nimi']}, points: {calculate_points(team, checkpoints)}\n")
+    
     return "\n".join(rows)
