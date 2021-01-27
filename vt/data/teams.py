@@ -37,8 +37,9 @@ def add_team(series: dict, team: dict):
 
 
 def remove_team(series: dict, team_name: str):
-    """Poistaa joukkueen sarjasta"""
-    teams = [team for team in series['joukkueet'] if team['nimi'].lower() != team_name.lower()]
+    """Poistaa annetun nimisen joukkueen sarjasta.
+    Ei huomioi eroja kirjainten koossa, eikä tyhjää tilaa nimen alussa tai lopussa."""
+    teams = [team for team in series['joukkueet'] if team['nimi'].lower().strip() != team_name.lower().strip()]
     series['joukkueet'] = teams
 
 def update_team(data: dict, new_series: dict, updated_team: dict):
