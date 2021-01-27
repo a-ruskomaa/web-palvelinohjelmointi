@@ -1,7 +1,7 @@
 import random
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from vt.data.data import load_data
-from vt.data.checkpoints import find_checkpoint_by_id, get_points
+from vt.data.checkpoints import find_checkpoint_by_id, get_points, calculate_distance
 
 class Joukkue:
     def __init__(self, nimi: str, jasenet: list=[], id: int=-1,  leimaustapa: list=[], rastit: list=[]):
@@ -67,19 +67,36 @@ def calculate_statistics(team: dict, checkpoints: list):
     valid_punches, start_punch, end_punch = parse_punches(punches, checkpoints)
 
     points = calculate_points(valid_punches)
-    time = calculate_time(valid_punches)
-    distance = calculate_total_distance(valid_punches)
+    time = calculate_time(start_punch, end_punch)
+    distance = calculate_total_distance(start_punch, end_punch, valid_punches)
 
     return points, time, distance
 
 
 
-def calculate_time(valid_punches: list):
-    return None
+def calculate_time(start_punch, end_punch) -> timedelta:
+    """Laskee lähtö- ja maalileimauksen välisen ajan"""
+    if start_punch and end_punch:
+        return datetime.fromisoformat(end_punch['aika']) - datetime.fromisoformat(start_punch['aika'])
+    
+    return timedelta(0)
 
 
-def calculate_total_distance(valid_punches: list):
-    return None
+def calculate_total_distance(start_punch, end_punch, valid_punches: list):
+    """Laskee joukkueen kulkeman kokonaismatkan laillisten rastileimauksien perusteella"""
+    if not (start_punch and end_punch):
+        return 0
+
+    punch_iter = iter(sorted([start_punch, end_punch, *valid_punches], key=lambda x: x['aika']))
+
+    total = 0
+    checkpoint_a = next(punch_iter)
+    for checkpoint_b in punch_iter:
+        total += calculate_distance(checkpoint_a['rasti'], checkpoint_b['rasti'])
+        checkpoint_a = checkpoint_b
+
+    return total
+
 
 
 def calculate_points(valid_punches: list):
@@ -98,7 +115,7 @@ def parse_punches(punches: list, checkpoints: list):
     on vastattava todellista rastia ja leimauksen ajankohdan tulee olla lähtö- ja maalileimauksen
     välissä.
     
-    Palauttaa tuplen muodossa: [(aika, koodi, lat, lon)], 
+    Palauttaa listan leimauksia muodossa: [{aika, rasti={id, lat, lon, koodi}}]
     """
 
     punched_checkpoints = set()
@@ -109,7 +126,7 @@ def parse_punches(punches: list, checkpoints: list):
     for punch in punches:
         checkpoint = find_checkpoint_by_id(punch['rasti'], checkpoints)
         if checkpoint:
-            parsed_punches.append({'aika': punch['aika'], 'rasti':checkpoint})
+            parsed_punches.append({'aika': punch['aika'], 'rasti':checkpoint.copy()})
 
     start_punch, end_punch = _get_start_end_punches(parsed_punches)
 
@@ -125,7 +142,7 @@ def parse_punches(punches: list, checkpoints: list):
 def _get_start_end_punches(parsed_punches: list):
     """Etsii myöhäisimmän lähtöleimauksen ja ensimmäisen maalileimauksen.
     
-    Palauttaa dictionaryn muodossa {start: (lähtöleimaus, ajankohta), end: (maalileimaus, ajankohta)}"""
+    Palauttaa leimaukset muodossa: {aika, rasti={id, lat, lon, koodi}}"""
     start_datetime = None
     start_punch = None
     end_datetime = None

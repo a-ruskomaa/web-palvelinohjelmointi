@@ -32,6 +32,8 @@ def res():
     rows.append("")
     rows.append(stage3_response(data))
     rows.append("")
+    rows.append(stage5_response(data))
+    rows.append("")
 
     return "\n".join(rows)
 
@@ -89,4 +91,21 @@ def stage3_response(data):
 
 def stage5_response(data):
     """Muodostaa 5-tason vastauksen"""
-    pass
+    
+    rows = []
+    rows.append("----------- TASO 5 -----------")
+
+    checkpoints = data['rastit']
+    
+    # Hirveä onelineri, joka luo jokaisesta joukkueesta tuplen muotoa (pisteet, aika, etäisyys, nimi, jäsenet[])
+    # ja järjestää joukkueet ensisijaisesti pisteiden, toissijaisesti ajan mukaan
+    teams = sorted(((*calculate_statistics(team, checkpoints), team['nimi'], sorted(team['jasenet'])) for team in parse_teams(data)), key=lambda x:(-x[0],x[1]))
+
+    # Tulostellaan jokaisen joukkueen ja jäsenen tiedot
+    for points, time, distance, name, members in teams:
+        rows.append(f"{name} ({points} p, {int(round(distance))} km, {time})")
+        for member in members:
+            rows.append(f"  {member}")
+
+    
+    return "\n".join(rows)
