@@ -59,17 +59,38 @@ def generate_random_id(teams: list, iter: int=0):
 
     return rdm
 
-def calculate_points(team: dict, checkpoints: list):
-    """Laskee pisteet annetun joukkueen rastileimauksista"""
+def calculate_statistics(team: dict, checkpoints: list):
+
+    punches = team['rastit']
 
     # seulotaan rastileimauksista vain kelvolliset leimaukset
-    parsed_punches = parse_punches(team['rastit'], checkpoints)
+    valid_punches, start_punch, end_punch = parse_punches(punches, checkpoints)
+
+    points = calculate_points(valid_punches)
+    time = calculate_time(valid_punches)
+    distance = calculate_total_distance(valid_punches)
+
+    return points, time, distance
+
+
+
+def calculate_time(valid_punches: list):
+    return None
+
+
+def calculate_total_distance(valid_punches: list):
+    return None
+
+
+def calculate_points(valid_punches: list):
+    """Laskee pisteet annetuista rastileimauksista"""
 
     total = 0
-    for punch in parsed_punches:
-        total += get_points(punch[1])
+    for punch in valid_punches:
+        total += get_points(punch['rasti']['koodi'])
 
     return total
+
 
 
 def parse_punches(punches: list, checkpoints: list):
@@ -77,29 +98,28 @@ def parse_punches(punches: list, checkpoints: list):
     on vastattava todellista rastia ja leimauksen ajankohdan tulee olla lähtö- ja maalileimauksen
     välissä.
     
-    Palauttaa tuplen muodossa: (aika, koodi, lat, lon)
+    Palauttaa tuplen muodossa: [(aika, koodi, lat, lon)], 
     """
 
     punched_checkpoints = set()
     parsed_punches = []
     valid_punches = []
 
-    # Karsitaan ensimmäisellä iteraatiolla pois leimaukset jotka eivät vastaa todellista rastia
+    # Muunnetaan rastileimaukset muotoon {aika, {id, lat, lon, koodi}} ja karsitaan pois epäkelvot leimaukset
     for punch in punches:
         checkpoint = find_checkpoint_by_id(punch['rasti'], checkpoints)
         if checkpoint:
-            parsed_punches.append((punch['aika'], checkpoint['koodi'], checkpoint['lat'], checkpoint['lon']))
+            parsed_punches.append({'aika': punch['aika'], 'rasti':checkpoint})
 
-    # Selvitetään lähtö- ja maalileimauksen ajankohdat
-    start_end_punches = _get_start_end_punches(parsed_punches)
+    start_punch, end_punch = _get_start_end_punches(parsed_punches)
 
     # Karsitaan toisella iteraatiolla leimaukset, jotka ovat sallitun aikavälin ulkopuolella
     # tai leimattu useammin kuin kerran
     for punch in parsed_punches:
-        if _is_valid_punch(punch, start_end_punches, punched_checkpoints):
+        if _is_valid_punch(punch, start_punch, end_punch, punched_checkpoints):
             valid_punches.append(punch)
 
-    return valid_punches
+    return valid_punches, start_punch, end_punch
 
 
 def _get_start_end_punches(parsed_punches: list):
@@ -113,8 +133,8 @@ def _get_start_end_punches(parsed_punches: list):
 
     # Etsitään ensimmäisellä iteraatiolla myöhäisin lähtöleimaus
     for punch in parsed_punches:
-        if punch[1] == 'LAHTO':
-            start_timestamp = punch[0]
+        if punch['rasti']['koodi'] == 'LAHTO':
+            start_timestamp = punch['aika']
             temp_datetime = datetime.fromisoformat(start_timestamp) if start_timestamp else None
 
             # Hyväksytään ensimmäinen vastaantuleva lähtöleimaus sekä leimaus jonka
@@ -126,8 +146,8 @@ def _get_start_end_punches(parsed_punches: list):
     # Etsitään toisella iteraatiolla ensimmäinen maalileimaus (vain jos lähtöleimaus löytyi)
     if start_datetime:
         for punch in parsed_punches:
-            if punch[1] == 'MAALI':
-                end_timestamp = punch[0]
+            if punch['rasti']['koodi'] == 'MAALI':
+                end_timestamp = punch['aika']
                 temp_datetime = datetime.fromisoformat(end_timestamp) if end_timestamp else None
 
                 # Hyväksytään ensimmäinen vastaantuleva maalileimaus sekä leimaus jonka
@@ -137,41 +157,25 @@ def _get_start_end_punches(parsed_punches: list):
                     end_datetime = temp_datetime
                     end_punch = punch
 
-    return {
-        'start': (start_punch, start_datetime),
-        'end': (end_punch, end_datetime)
-        }
+    return (start_punch, end_punch)
 
 
-def _is_valid_punch(punch, start_end_punches: dict, punched_checkpoints: set):
+def _is_valid_punch(punch, start_punch, end_punch, punched_checkpoints: set):
     """Tarkistaa onko rastileimauksen aikaleima lähtö- ja maalileimauksen välissä ja
     onko rasti leimattu vain yhden kerran"""
 
     # Jos rasti on jo leimattu, ei kelpuuteta toista leimausta
-    if punch[1] in punched_checkpoints:
+    if punch['rasti']['koodi'] in punched_checkpoints:
         return False
 
-    timestamp = datetime.fromisoformat(punch[0])
-    start = start_end_punches['start'][1]
-    end = start_end_punches['end'][1]
+    timestamp = datetime.fromisoformat(punch['aika'])
+    start_timestamp = datetime.fromisoformat(start_punch['aika'])
+    end_timestamp = datetime.fromisoformat(end_punch['aika'])
 
     # Kelpuutetaan leimaus vain jos se on sallitulla aikavälillä
-    valid = start < timestamp < end
+    valid = start_timestamp < timestamp < end_timestamp
     if valid:
         # Lisätään kelvollisten leimausten joukkoon
-        punched_checkpoints.add(punch[1])
+        punched_checkpoints.add(punch['rasti']['koodi'])
 
     return valid
-
-
-def print_team(teams: list):
-    """Muodostaa joukkueiden nimistä merkkijonon, jossa joukkueet
-    ovat aakkosjärjestyksessä rivinvaihdoilla erotettuna"""
-
-    rows = []
-    for team in teams:
-        rows.append(f"{team['name']}, points: {calculate_points(team)}")
-
-    return rows
-
-

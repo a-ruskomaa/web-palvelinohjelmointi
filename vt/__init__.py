@@ -21,7 +21,7 @@ def create_app(test_config=None):
 
     @app.route('/')
     def hello():
-        return "Hello!"
+        return "<a href='/vt1/'>vt1</a>"
         
     @app.route('/data.json')
     def download_data():

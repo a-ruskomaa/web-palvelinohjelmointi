@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 
 from vt.data.data import load_data, save_data
-from vt.data.teams import parse_teams, add_team, remove_team, names_to_string, calculate_points, Joukkue
+from vt.data.teams import parse_teams, add_team, remove_team, names_to_string, calculate_statistics, Joukkue
 from vt.data.checkpoints import checkpoints_to_string
 from vt.data.series import get_series_by_name
 from vt.helper import return_text
@@ -75,14 +75,18 @@ def stage3_response(data):
     
     # Hirveä onelineri, joka luo jokaisesta joukkueesta tuplen muotoa (pisteet, nimi, jäsenet[])
     # ja järjestää joukkueet ensisijaisesti pisteiden mukaan, toissijaisesti nimen mukaan
-    teams = sorted(((calculate_points(team, checkpoints), team['nimi'], sorted(team['jasenet'])) for team in parse_teams(data)), key=lambda x:(-x[0],x[1]))
+    teams = sorted(((calculate_statistics(team, checkpoints)[0], team['nimi'], sorted(team['jasenet'])) for team in parse_teams(data)), key=lambda x:(-x[0],x[1]))
 
     # Tulostellaan jokaisen joukkueen ja jäsenen tiedot
-    for team in teams:
-        rows.append(f"{team[1]} ({team[0]} p)")
-        for member in team[2]:
+    for points, name, members in teams:
+        rows.append(f"{name} ({points} p)")
+        for member in members:
             rows.append(f"  {member}")
 
     
     return "\n".join(rows)
 
+
+def stage5_response(data):
+    """Muodostaa 5-tason vastauksen"""
+    pass
