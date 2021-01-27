@@ -14,6 +14,7 @@ def checkpoints_to_string(checkpoints: list):
 
 
 def find_checkpoint_by_id(id, checkpoints: list):
+    """Etsii rastin annetun id:n perusteella. Id voi olla merkkijono tai kokonaisluku"""
     try:
         id_int = int(id)
         if id_int == 0:
@@ -28,19 +29,20 @@ def find_checkpoint_by_id(id, checkpoints: list):
     return None
 
 
-def get_points(koodi):
+def get_points(checkpoint):
+    """Laskee rastilta saadut pisteet. Mikäli rastin koodin ensimmäinen merkki ei ole luku, palauttaa 0"""
     try:
-        return int(koodi[0])
+        return int(checkpoint['koodi'][0])
     except ValueError:
         return 0
 
 
-def calculate_distance(a, b):
+def calculate_distance(checkpoint_a, checkpoint_b):
     try:
-        lat1 = radians(float(a['lat']))
-        lon1 = radians(float(a['lon']))
-        lat2 = radians(float(b['lat']))
-        lon2 = radians(float(b['lon']))
+        lat1 = radians(float(checkpoint_a['lat']))
+        lon1 = radians(float(checkpoint_a['lon']))
+        lat2 = radians(float(checkpoint_b['lat']))
+        lon2 = radians(float(checkpoint_b['lon']))
     except ValueError:
         return 0
     # approximate radius of earth in km

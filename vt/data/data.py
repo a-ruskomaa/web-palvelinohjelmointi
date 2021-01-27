@@ -10,6 +10,7 @@ DATA_FILENAME = "data.json"
 def load_data(remote=False) -> dict:
     """Lataa json-muotoisen datan ja muuntaa sen pythonin dictionaryksi """
     if remote:
+        # Ladataan data ulkoiselta palvelimelta
         data = _reset_data()
     else:
         with open(DATA_FILENAME, encoding="UTF-8", mode="r") as file:
@@ -25,11 +26,12 @@ def save_data(data):
 
 def _reset_data():
     """Lataa oletusdatan palvelimelta ja korvaa sillä paikallisen datan"""
-    
     data = None
     try:
+        # Ladataan data ulkoiselta palvelimelta
         with urllib.request.urlopen(DATA_REMOTE_URL) as response:
             data = json.load(response)
+            # Korvataan paikallisesti tallennettu data palvelimen datalla
             save_data(data)
     except URLError:
         # Ladataan paikallinen data jos palvelin ei vastaa

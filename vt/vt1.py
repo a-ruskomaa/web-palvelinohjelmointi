@@ -1,7 +1,8 @@
 from flask import Blueprint, request
 
 from vt.data.data import load_data, save_data
-from vt.data.teams import parse_teams, add_team, remove_team, names_to_string, calculate_statistics, Joukkue
+from vt.data.teams import parse_teams, add_team, remove_team, update_team, names_to_string, Joukkue
+from vt.data.statistics import calculate_statistics
 from vt.data.checkpoints import checkpoints_to_string
 from vt.data.series import get_series_by_name
 from vt.helper import return_text
@@ -26,6 +27,8 @@ def res():
             add_team(parsed[0], parsed[1].__dict__)
         elif tila == 'delete':
             remove_team(parsed[0], parsed[1].nimi)
+        elif tila == 'update':
+            update_team(parsed[0], parsed[1].nimi)
         save_data(data)
 
     rows.append(stage1_response(data))
