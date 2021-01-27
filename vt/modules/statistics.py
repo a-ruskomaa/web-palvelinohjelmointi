@@ -1,4 +1,4 @@
-from vt.data.checkpoints import find_checkpoint_by_id, get_points, calculate_distance
+from vt.modules.checkpoints import find_checkpoint_by_id, get_points, calculate_distance
 from datetime import datetime, timedelta
 
 def calculate_statistics(team: dict, checkpoints: list):

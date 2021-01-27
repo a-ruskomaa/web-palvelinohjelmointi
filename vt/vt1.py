@@ -1,11 +1,11 @@
 from urllib.error import URLError
 from flask import Blueprint, request
 
-from vt.data.data import load_data, save_data
-from vt.data.teams import parse_teams, create_team, add_team, remove_team, update_team, names_to_string
-from vt.data.statistics import calculate_statistics
-from vt.data.checkpoints import checkpoints_to_string
-from vt.data.series import get_series_by_name
+from vt.modules.data import load_data, save_data
+from vt.modules.teams import parse_teams, create_team, add_team, remove_team, update_team, names_to_string
+from vt.modules.statistics import calculate_statistics
+from vt.modules.checkpoints import checkpoints_to_string
+from vt.modules.series import get_series_by_name
 from vt.helper import return_text
 
 bp = Blueprint('vt1', __name__, url_prefix='/vt1')

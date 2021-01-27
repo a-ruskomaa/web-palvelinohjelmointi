@@ -1,6 +1,5 @@
 import random
-from vt.data.data import load_data
-
+from vt.modules.data import load_data
 
 def create_team(name, members, id, punching_methods):
     return {

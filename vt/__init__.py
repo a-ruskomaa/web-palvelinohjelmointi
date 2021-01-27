@@ -1,19 +1,8 @@
-import os
-
-from flask import Flask, request
-from flask.helpers import send_from_directory
+from flask import Flask
 
 
 def create_app(test_config=None):
-    # create and configure the app
-    # app = Flask(__name__, instance_relative_config=True)
     app = Flask(__name__)
-
-    # ensure the instance folder exists
-    # try:
-    #     os.makedirs(app.instance_path)
-    # except OSError:
-    #     pass
 
     # rekisteröidään viikkotehtävien polut blueprinteina selkeyttämään koodia
     from . import vt1
@@ -21,10 +10,10 @@ def create_app(test_config=None):
 
     @app.route('/')
     def hello():
-        return "<a href='/vt1/'>vt1</a>"
-        
-    # @app.route('/data.json')
-    # def download_data():
-    #     return send_from_directory('../', 'data.json')
+        rows = []
 
+        for i in range(1,2):
+            rows.append(f"<p><a href='/vt{i}/'>Viikkotehtävä {i}</a></p>")
+        return "\n".join(rows)
+        
     return app

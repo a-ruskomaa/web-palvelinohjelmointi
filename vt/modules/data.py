@@ -2,10 +2,9 @@
 import json
 import os
 import urllib.request
-from urllib.error import URLError
 
 DATA_REMOTE_URL = "http://hazor.eu.pythonanywhere.com/2021/data.json"
-DATA_FILENAME = "data.json"
+DATA_FILENAME = os.path.join(os.getcwd(), 'data', 'data.json')
 
 def load_data(remote=False) -> dict:
     """Lataa json-muotoisen datan ja muuntaa sen pythonin dictionaryksi """
