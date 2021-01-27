@@ -1,3 +1,4 @@
+from urllib.error import URLError
 from flask import Blueprint, request
 
 from vt.data.data import load_data, save_data
@@ -17,7 +18,13 @@ def res():
     
     # Päätetään argumenttien perusteella luetaanko data paikallisesta tietorakenteesta vai palvelimelta
     reset_data = bool(request.args.get('reset', 0))
-    data = load_data(remote=reset_data)
+
+    try:
+        data = load_data(remote=reset_data)
+    except URLError:
+        return "Palvelin ei vastaa"
+    except FileNotFoundError:
+        return "Tiedostoa ei löydy"
 
     # Luetaan pyynnön loput argumentit
     state, team, series = parse_arguments(request.args, data)
