@@ -13,7 +13,7 @@ def load_data(remote=False) -> dict:
         # Ladataan data ulkoiselta palvelimelta
         data = _reset_data()
     else:
-        with open(DATA_FILENAME, encoding="UTF-8", mode="r") as file:
+        with open(os.path.join(DATA_PATH, DATA_FILENAME), encoding="UTF-8", mode="r") as file:
                 data = json.load(file)
     return data
 
