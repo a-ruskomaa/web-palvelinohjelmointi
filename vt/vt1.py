@@ -19,6 +19,7 @@ def res():
     # Päätetään argumenttien perusteella luetaanko data paikallisesta tietorakenteesta vai palvelimelta
     reset_data = bool(request.args.get('reset', 0))
 
+    # Ladataan data, käsitellään todennäköisimmät virhetapaukset
     try:
         data = load_data(remote=reset_data)
     except URLError:
@@ -29,6 +30,7 @@ def res():
     # Luetaan pyynnön loput argumentit
     state, team, series = parse_arguments(request.args, data)
 
+    # Käsitellään argumenttien dataa asiaankuuluvalla tavalla
     if series and state == 'insert':
         add_team(series, team)
         save_data(data)
@@ -39,6 +41,7 @@ def res():
         update_team(data, series, team)
         save_data(data)
 
+    # Lisätään vastaukseen tasokohtaiset tulostukset
     rows.append(stage1_response(data))
     rows.append("")
     rows.append(stage3_response(data))
@@ -50,6 +53,7 @@ def res():
 
 
 def parse_arguments(args, data):
+    """Parsii argumenteista joukkueiden käsittelyyn tarvittavan datan ja palauttaa sen sopivassa muodossa"""
     state = args.get('tila', 'insert')
     team_name = args.get('nimi')
     series_name = args.get('sarja')
@@ -57,9 +61,11 @@ def parse_arguments(args, data):
     team = None
     series = None
 
+    # Jos on annettu sarjan nimi, yritetään etsiä nimeä vastaava sarja
     if series_name:
         series = get_series_by_name(series_name, data)
 
+    # Jos on annettu joukkueen nimi, luodaan joukkuetta vastaava dictionary
     if team_name:
         members = args.getlist('jasen')
         punching_methods = [data['leimaustapa'].index(x) for x in args.getlist('leimaustapa')]
@@ -72,12 +78,13 @@ def stage1_response(data):
     """Muodostaa 1-tason vastauksen"""
     rows = []
     rows.append("----------- TASO 1 -----------")
-    # TODO virheenkäsittely
-    teams = parse_teams(data)
-    rows.append(names_to_string(teams))
+
+    # Muodostetaan kaikista joukkueista merkkijono
+    rows.append(names_to_string(parse_teams(data)))
 
     rows.append("")
 
+    # Muodostetaan kaikista rasteista merkkijono
     rows.append(checkpoints_to_string(data['rastit']))
 
     return "\n".join(rows)
@@ -106,7 +113,6 @@ def stage3_response(data):
 
 def stage5_response(data):
     """Muodostaa 5-tason vastauksen"""
-    
     rows = []
     rows.append("----------- TASO 5 -----------")
 

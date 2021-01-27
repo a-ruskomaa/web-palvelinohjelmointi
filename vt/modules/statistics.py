@@ -30,8 +30,10 @@ def _calculate_total_distance(start_punch, end_punch, valid_punches: list):
     if not (start_punch and end_punch):
         return 0
 
+    # Luodaan iteraattori aikajärjestyksessä olevista leimauksista
     punch_iter = iter(sorted([start_punch, end_punch, *valid_punches], key=lambda x: x['aika']))
 
+    # Iteroidaan leimausten läpi ja lasketaan kokonaismatka
     total = 0
     checkpoint_a = next(punch_iter)
     for checkpoint_b in punch_iter:

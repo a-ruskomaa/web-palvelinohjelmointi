@@ -1,6 +1,5 @@
 from flask import Flask
 
-
 def create_app(test_config=None):
     app = Flask(__name__)
 
@@ -10,8 +9,8 @@ def create_app(test_config=None):
 
     @app.route('/')
     def hello():
+        # luodaan etusivulle linkit viikkotehtävien alasivuille
         rows = []
-
         for i in range(1,2):
             rows.append(f"<p><a href='/vt{i}/'>Viikkotehtävä {i}</a></p>")
         return "\n".join(rows)

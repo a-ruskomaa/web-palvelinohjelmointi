@@ -38,14 +38,16 @@ def get_points(checkpoint):
 
 
 def calculate_distance(checkpoint_a, checkpoint_b):
+    """Laskee kahden rastin välisen etäisyyden"""
     try:
+        # Muunnetaan koordinaatit asteista radiaaneiksi
         lat1 = radians(float(checkpoint_a['lat']))
         lon1 = radians(float(checkpoint_a['lon']))
         lat2 = radians(float(checkpoint_b['lat']))
         lon2 = radians(float(checkpoint_b['lon']))
     except ValueError:
         return 0
-    # approximate radius of earth in km
+    # maan ympärysmitta kilometreissä
     R = 6373.0
 
     dlon = lon2 - lon1
