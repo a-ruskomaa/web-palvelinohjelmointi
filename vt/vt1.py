@@ -31,11 +31,13 @@ def res():
 
     if series and state == 'insert':
         add_team(series, team)
+        save_data(data)
     elif series and state == 'delete':
         remove_team(series, team['nimi'])
+        save_data(data)
     elif state == 'update':
         update_team(data, series, team)
-    save_data(data)
+        save_data(data)
 
     rows.append(stage1_response(data))
     rows.append("")

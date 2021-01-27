@@ -4,7 +4,8 @@ import os
 import urllib.request
 
 DATA_REMOTE_URL = "http://hazor.eu.pythonanywhere.com/2021/data.json"
-DATA_FILENAME = os.path.join(os.getcwd(), 'data', 'data.json')
+DATA_PATH = os.path.join(os.getcwd(), 'data')
+DATA_FILENAME = 'data.json'
 
 def load_data(remote=False) -> dict:
     """Lataa json-muotoisen datan ja muuntaa sen pythonin dictionaryksi """
@@ -18,7 +19,12 @@ def load_data(remote=False) -> dict:
 
 def save_data(data):
     """Tallentaa datan tiedostoon"""
-    with open(DATA_FILENAME, encoding="UTF-8", mode="w") as file:
+    try:
+        os.makedirs(DATA_PATH)
+    except OSError:
+        pass
+
+    with open(os.path.join(DATA_PATH, DATA_FILENAME), encoding="UTF-8", mode="w") as file:
         json.dump(data, file, ensure_ascii=False)
 
 
