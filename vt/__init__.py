@@ -23,8 +23,8 @@ def create_app(test_config=None):
     def hello():
         return "<a href='/vt1/'>vt1</a>"
         
-    @app.route('/data.json')
-    def download_data():
-        return send_from_directory('../', 'data.json')
+    # @app.route('/data.json')
+    # def download_data():
+    #     return send_from_directory('../', 'data.json')
 
     return app
