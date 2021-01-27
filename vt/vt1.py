@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 
 from vt.data.data import load_data, save_data
-from vt.data.teams import parse_teams, add_team, remove_team, update_team, names_to_string, Joukkue
+from vt.data.teams import parse_teams, create_team, add_team, remove_team, update_team, names_to_string
 from vt.data.statistics import calculate_statistics
 from vt.data.checkpoints import checkpoints_to_string
 from vt.data.series import get_series_by_name
@@ -14,22 +14,21 @@ bp = Blueprint('vt1', __name__, url_prefix='/vt1')
 def res():
     """Muodostaa tekstimuotoisen vastauksen get-pyyntöön"""
     rows = []
-
-    # Haetaanko data paikallisesta vai ulkoisesta tiedostosta
+    
+    # Päätetään argumenttien perusteella luetaanko data paikallisesta tietorakenteesta vai palvelimelta
     reset_data = bool(request.args.get('reset', 0))
     data = load_data(remote=reset_data)
-    
-    # Tarkistetaan onko pyynnön argumentteina joukkueen tiedot
-    parsed = parse_team_from_arguments(request.args, data)
-    if parsed:
-        tila = request.args.get('tila', 'insert')
-        if tila == 'insert':
-            add_team(parsed[0], parsed[1].__dict__)
-        elif tila == 'delete':
-            remove_team(parsed[0], parsed[1].nimi)
-        elif tila == 'update':
-            update_team(parsed[0], parsed[1].nimi)
-        save_data(data)
+
+    # Luetaan pyynnön loput argumentit
+    state, team, series = parse_arguments(request.args, data)
+
+    if series and state == 'insert':
+        add_team(series, team)
+    elif series and state == 'delete':
+        remove_team(series, team['nimi'])
+    elif state == 'update':
+        update_team(data, series, team)
+    save_data(data)
 
     rows.append(stage1_response(data))
     rows.append("")
@@ -41,19 +40,23 @@ def res():
     return "\n".join(rows)
 
 
-def parse_team_from_arguments(args, data):
-    """Muodostaa argumentteina annetuista tiedosta joukkue-objektin"""
-    name = request.args.get('nimi')
-    series_name = request.args.get('sarja')
-    if name and series_name:
-        series = get_series_by_name(series_name, data)
-        if series:
-            members = request.args.getlist('jasen')
-            punching_methods = [data['leimaustapa'].index(x) for x in request.args.getlist('leimaustapa')]
-            team = Joukkue(nimi=name, jasenet=members, leimaustapa=punching_methods)
+def parse_arguments(args, data):
+    state = args.get('tila', 'insert')
+    team_name = args.get('nimi')
+    series_name = args.get('sarja')
+    team_id = args.get('id', -1, type=int)
+    team = None
+    series = None
 
-            return (series, team)
-    return None
+    if series_name:
+        series = get_series_by_name(series_name, data)
+
+    if team_name:
+        members = args.getlist('jasen')
+        punching_methods = [data['leimaustapa'].index(x) for x in args.getlist('leimaustapa')]
+        team = create_team(team_name, members, team_id, punching_methods)
+
+    return state, team, series
 
 
 def stage1_response(data):
