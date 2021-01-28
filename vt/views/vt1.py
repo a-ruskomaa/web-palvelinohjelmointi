@@ -6,11 +6,11 @@ from vt.modules.teams import parse_teams, create_team, add_team, remove_team, up
 from vt.modules.statistics import calculate_statistics
 from vt.modules.checkpoints import checkpoints_to_string
 from vt.modules.series import get_series_by_name
-from vt.helper import return_text
+from vt.helpers.decorators import return_text
 
-bp = Blueprint('vt1', __name__, url_prefix='/vt1')
+vt1 = Blueprint('vt1', __name__, url_prefix='/vt1')
 
-@bp.route('/', methods=['GET'], strict_slashes=False)
+@vt1.route('/', methods=['GET'], strict_slashes=False)
 @return_text
 def res():
     """Muodostaa tekstimuotoisen vastauksen get-pyyntöön"""
