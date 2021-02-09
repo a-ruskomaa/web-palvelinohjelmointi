@@ -16,9 +16,3 @@ def create_app():
         return "\n".join(rows)
         
     return app
-
-# if __name__ == '__main__':
-#     # asetetaan debug-moodi päälle. Ei saa pitää päällä tuotantokäytössä
-#     app = create_app()
-#     app.debug = True
-#     app.run()

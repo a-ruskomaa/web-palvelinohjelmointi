@@ -1,0 +1,23 @@
+{% macro color(r,c, colors) -%}
+{{colors[0] if (c % 2 == r % 2) else colors[1]}}
+{%- endmacro %}
+
+{% macro state_url(state) -%}
+<a href="?{{ state|urlencode|urlencode}}">Linkki</a>
+{%- endmacro %}
+
+{% macro undo_disabled(state) -%}
+{{"disabled='disabled'" if state['del_r'] == -1 and state['del_c'] == -1 else ""}}
+{%- endmacro %}
+
+{% macro move_disabled(state) -%}
+{{"disabled='disabled'" if state['mode'] == 'move' else ""}}
+{%- endmacro %}
+
+{% macro delete_disabled(state) -%}
+{{"disabled='disabled'" if state['mode'] == 'delete' else ""}}
+{%- endmacro %}
+
+{% macro show_mode(state) -%}
+{{"Poista" if state['mode'] == 'delete' else "Siirrä" if state['mode'] == 'move' else ""}}
+{%- endmacro %}

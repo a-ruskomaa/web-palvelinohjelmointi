@@ -1,0 +1,23 @@
+{% import "macros.jinja" as macros %}
+
+<p class='player-name'>{{ form.pelaaja1.data }}</p>
+<table class="board">
+  {% for row in board %}
+      {% set r = loop.index0 %}
+      <tr>
+          {% for column in row %}
+          {% set c = loop.index0 %}
+          <td class="{{ macros.color(r,c, colors) }}">
+            <a href="?{{ url_creator(r,c) }}">
+            {% set img_url = get_img_url(board[r][c]) %}
+            {% if img_url %}
+            <img class='pawn' src="{{img_url}}" alt="{{board[r][c]}}"/>
+            {% else %}
+            <span class='empty'></span>
+            {% endif %}
+            </a></td>
+          {% endfor %}
+      </tr>
+  {% endfor %}
+</table>
+<p class='player-name'>{{ form.pelaaja2.data }}</p>

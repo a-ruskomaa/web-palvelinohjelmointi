@@ -1,0 +1,26 @@
+{% import "macros.jinja" as macros %}
+
+
+<div id='form-container'>
+  <form action="{{request.base_url}}" method="GET">
+    <fieldset>
+      <div id='field-container'>
+        {{ form.hidden_tag() }}
+        {{form.x.label}} <div class="input-container">{{ form.x }} {% for error in form.x.errors %} <span class='error'>{{ error|e }}</span> {% endfor %}</div>
+        {{form.pelaaja1.label}} <div class="input-container">{{ form.pelaaja1 }} {% for error in form.pelaaja1.errors %} <span class='error'>{{ error|e }}</span>{% endfor %}</div>
+        {{form.pelaaja2.label}} <div class="input-container">{{ form.pelaaja2 }} {% for error in form.pelaaja2.errors %} <span class='error'>{{ error|e }}</span>{% endfor %}</div>
+      </div>
+    </fieldset>
+    <div>
+      <button name='next_mode' value='init'>Luo pelilauta</button>
+    </div>
+    {% if board %}
+    <div id="control-buttons">
+      <p>Valittu tila: {{macros.show_mode(state)}}</p>
+      <button name='next_mode' value='delete' {{macros.delete_disabled(state)}}>Poista</button>
+      <button name='next_mode' value='move' {{macros.move_disabled(state)}}>Siirrä</button>
+      <button name='next_mode' value='undo' {{macros.undo_disabled(state)}}>Peruuta</button>
+    </div>
+    {% endif %}
+  </form>
+</div>
