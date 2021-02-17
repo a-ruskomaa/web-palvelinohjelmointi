@@ -1,5 +1,4 @@
 import random
-from vt.modules.data import load_data
 
 def create_team(name, members, id, punching_methods):
     return {
@@ -28,11 +27,11 @@ def names_to_string(teams: list):
     return "\n".join(sorted((team['nimi'] for team in teams), key=lambda name: name.lower()))
 
 
-def add_team(series: dict, team: dict):
+def add_team(selected_series: dict, selected_team: dict, all_series: dict):
     """Lisää joukkueen sarjaan, arpoo joukkueelle uuden id:n jos id:tä ei ole"""
-    if team['id'] == -1:
-        team['id'] = _generate_random_id(parse_teams(load_data(remote=False)))
-    series['joukkueet'].append(team)
+    if selected_team['id'] == -1:
+        selected_team['id'] = _generate_random_id(all_series)
+    selected_series['joukkueet'].append(selected_team)
 
 
 def remove_team(series: dict, team_name: str):

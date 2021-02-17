@@ -1,7 +1,7 @@
-import vt
+import tupa
 
 if __name__ == '__main__':
-    app = vt1.create_app()
+    app = tupa.create_app()
     # asetetaan debug-moodi päälle. Ei saa pitää päällä tuotantokäytössä
     app.debug = True
     app.env = 'development'

@@ -1,12 +1,12 @@
 from urllib.error import URLError
 from flask import Blueprint, request
 
-from vt.modules.data import load_data, save_data
-from vt.modules.teams import parse_teams, create_team, add_team, remove_team, update_team, names_to_string
-from vt.modules.statistics import calculate_statistics
-from vt.modules.checkpoints import checkpoints_to_string
-from vt.modules.series import get_series_by_name
-from vt.helpers.decorators import return_text
+from tupa.modules.data.data import load_data, save_data
+from tupa.modules.domain.teams import parse_teams, create_team, add_team, remove_team, update_team, names_to_string
+from tupa.modules.domain.statistics import calculate_statistics
+from tupa.modules.domain.checkpoints import checkpoints_to_string
+from tupa.modules.domain.series import get_series_by_name
+from tupa.helpers.decorators import return_text
 
 vt1 = Blueprint('vt1', __name__, url_prefix='/vt1')
 
@@ -28,17 +28,19 @@ def res():
         return "Tiedostoa ei löydy"
 
     # Luetaan pyynnön loput argumentit
-    state, team, series = parse_arguments(request.args, data)
+    state, selectd_team, selected_series = parse_arguments(request.args, data)
+
+    all_teams = parse_teams(data)
 
     # Käsitellään argumenttien dataa asiaankuuluvalla tavalla
-    if series and state == 'insert':
-        add_team(series, team)
+    if selected_series and state == 'insert':
+        add_team(selected_series, selectd_team, all_teams)
         save_data(data)
-    elif series and state == 'delete':
-        remove_team(series, team['nimi'])
+    elif selected_series and state == 'delete':
+        remove_team(selected_series, selectd_team['nimi'])
         save_data(data)
     elif state == 'update':
-        update_team(data, series, team)
+        update_team(data, selected_series, selectd_team)
         save_data(data)
 
     # Lisätään vastaukseen tasokohtaiset tulostukset
@@ -58,20 +60,20 @@ def parse_arguments(args, data):
     team_name = args.get('nimi')
     series_name = args.get('sarja')
     team_id = args.get('id', -1, type=int)
-    team = None
-    series = None
+    selected_team = None
+    selected_series = None
 
     # Jos on annettu sarjan nimi, yritetään etsiä nimeä vastaava sarja
     if series_name:
-        series = get_series_by_name(series_name, data)
+        selected_series = get_series_by_name(series_name, data)
 
     # Jos on annettu joukkueen nimi, luodaan joukkuetta vastaava dictionary
     if team_name:
         members = args.getlist('jasen')
         punching_methods = [data['leimaustapa'].index(x) for x in args.getlist('leimaustapa')]
-        team = create_team(team_name, members, team_id, punching_methods)
+        selected_team = create_team(team_name, members, team_id, punching_methods)
 
-    return state, team, series
+    return state, selected_team, selected_series
 
 
 def stage1_response(data):
