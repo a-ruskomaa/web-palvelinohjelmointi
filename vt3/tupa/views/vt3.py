@@ -1,7 +1,7 @@
 from urllib.error import URLError
 from flask import Blueprint, request
 
-from tupa.modules.data.data import load_data, save_data
+import tupa.modules.data.db
 from tupa.modules.domain.teams import parse_teams, create_team, add_team, remove_team, update_team, names_to_string
 from tupa.modules.domain.statistics import calculate_statistics
 from tupa.modules.domain.checkpoints import checkpoints_to_string
