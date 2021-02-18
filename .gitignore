@@ -15,7 +15,6 @@ build/
 
 .vscode
 
-data/
 data.json
 
 .zip

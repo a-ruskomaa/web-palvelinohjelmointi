@@ -1,1 +1,0 @@
-Jyväskylän yliopiston web-palvelinohjelmointikurssin viikkotehtävät
