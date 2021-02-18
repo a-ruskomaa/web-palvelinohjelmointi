@@ -3,10 +3,7 @@ from flask import Flask
 def create_app():
     app = Flask(__name__)
 
-    # rekisteröidään viikkotehtävien polut blueprinteina selkeyttämään koodia
-    from .views.vt1 import vt1
     from .views.vt3 import vt3
-    app.register_blueprint(vt1)
     app.register_blueprint(vt3)
 
     @app.route('/')
