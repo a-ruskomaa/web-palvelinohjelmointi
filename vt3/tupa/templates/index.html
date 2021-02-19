@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block title %}Laskuri{% endblock %}
+{% block content %}
+
+{% for kilpailu in kilpailut %}
+<p>{{kilpailu['nimi']}}</p>
+{% endfor %}
+
+{% endblock %}

@@ -1,19 +1,30 @@
 import sqlite3
-import os
-from flask import current_app, g
-from flask.cli import with_appcontext
+from flask import g
 
-DB_PATH = os.path.join(os.getcwd(), 'data', 'data.db')
+class Database:
+    def get_connection(self):
+        pass
+    def close_connection(self):
+        pass
 
-def get_db():
-    if 'db' not in g:
-        g.db = sqlite3.connect(DB_PATH)
-        g.db.row_factory = sqlite3.Row
+class SqliteDb(Database):
 
-    return g.db
+    def __init__(self, path:str):
+        self.path = path
 
-def close_db(e=None):
-    db = g.pop('db', None)
+    def get_connection(self):
+        conn = sqlite3.connect(self.path)
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.row_factory = sqlite3.Row
+        self.conn = conn
+        return conn
 
-    if db is not None:
-        db.close()
+    def close_connection(self):
+        if self.conn is not None:
+            self.conn.close()
+
+class MySQLDb(Database):
+    def get_connection(self):
+        pass
+    def close_connection(self):
+        pass
