@@ -13,7 +13,7 @@ class SqliteDb(Database):
         self.path = path
 
     def get_connection(self):
-        conn = sqlite3.connect(self.path)
+        conn = sqlite3.connect(self.path, isolation_level=None)
         conn.execute("PRAGMA foreign_keys = ON")
         conn.row_factory = sqlite3.Row
         self.conn = conn

@@ -1,0 +1,21 @@
+{% extends "joukkueet/joukkue_base.html" %}
+{% block title %}Listaa{% endblock %}
+{% block content %}
+
+<ul>
+    {% for sarja in sarjat.values() %}
+    <li>{{sarja['nimi']}}</li>
+        <ul>
+        {% for joukkue in sarja['joukkueet'].values() %}
+            <li>{{joukkue['nimi']}}</li>
+                <ul>
+                    {% for jasen in joukkue['jasenet'] %}
+                    <li>{{jasen}}</li>
+                    {% endfor %}
+                </ul>
+        {% endfor %}
+        </ul>
+    {% endfor %}
+</ul>
+
+{% endblock %}

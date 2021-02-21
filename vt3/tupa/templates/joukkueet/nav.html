@@ -1,0 +1,8 @@
+<nav>
+    <ul>
+        <li>{{kilpailu_nimi}}</li>
+        <li><a href="{{url_for('joukkueet.listaa')}}">Joukkueet</a></li>
+        <li><a href="{{url_for('joukkueet.muokkaa')}}">{{joukkue_nimi}}</a></li>
+        <li><a href="{{url_for('auth.logout')}}">Kirjaudu ulos</a> </li>
+    </ul>
+</nav>

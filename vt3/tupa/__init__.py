@@ -10,20 +10,26 @@ def create_app():
     
     print("creating app...")
 
-    from .views import admin, login
+    from .views import admin, auth, joukkueet
     app.register_blueprint(admin.bp)
-    app.register_blueprint(login.bp)
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(joukkueet.bp)
 
-    from tupa.modules.data import init_db
+    from tupa.modules.data import init_db, close_connection
     
     init_db(app)
+    app.teardown_appcontext(close_connection)
 
     @app.route('/', methods=["GET"])
     def index():
         print("ETUSIVU")
-        if session.get('joukkue'):
-            return redirect(url_for('joukkuesivu'))
+        kayttaja = session.get('kayttaja', None)
+        if kayttaja and 'joukkue' in kayttaja['roolit']:
+            return redirect(url_for('joukkueet.listaa'))
+        elif kayttaja and 'admin' in kayttaja['roolit']:
+            # TODO ohjaa adminin etusivulle
+            return redirect(url_for('admin.listaa'))
         else:
-            return redirect(url_for('login.login'))
+            return redirect(url_for('auth.login'))
             
     return app

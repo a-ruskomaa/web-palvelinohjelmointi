@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}LOGIN{% endblock %}
+{% block content %}
+
+
+<form action="/login" method="POST">
+    {{ loginform.csrf_token }}
+    <fieldset>
+        <div>
+            {% for subfield in loginform.kilpailu %}
+                    <div>{{ subfield }} {{ subfield.label }}</div>
+            {% endfor %}
+        </div>
+        <div>
+            {{ loginform.joukkue.label }} {{ loginform.joukkue }}
+        </div>
+        <div>
+            {{ loginform.salasana.label }} {{ loginform.salasana }}
+        </div>
+        <button type="submit">Kirjaudu</button>
+        {% for error in loginerrors %}
+        <span class="error">{{error}}</span>
+        {% endfor %}
+    </fieldset>
+</form>
+
+{% endblock %}

@@ -1,8 +1,4 @@
-from urllib.error import URLError
-from flask import Blueprint, request, render_template
-
-import tupa.modules.data.db
-from tupa.helpers.decorators import return_text
+from flask import Blueprint, render_template
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
