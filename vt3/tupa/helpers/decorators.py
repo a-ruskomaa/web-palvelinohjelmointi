@@ -2,22 +2,21 @@ from flask import Response, session, redirect, url_for
 from typing import List
 from functools import wraps
 
-def roles_allowed(roles: List[str]):
-    """Decorator that only allows access to a route if the user is logged in and has at least
-    one of the specified roles"""
+def sallitut_roolit(roolit: List[str]):
+    """Sallii vain annetuissa rooleissa oleville käyttäjille pääsyn tällä koristeltuun reittiin."""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            user = session.get('kayttaja')
-            if not user:
-                print("no user")
+            # Haetaan kirjautunut käyttäjä sessiosta
+            kayttaja = session.get('kayttaja')
+            # Jos ei käyttäjää, uudelleenohjataan kirjautumissivulle
+            if not kayttaja:
                 return redirect(url_for('auth.login'))
-            if any(role in user['roolit'] for role in roles):
-                # User has a required role, route request back to the original handler
-                print("correct role")
+            # Jos on käyttäjä ja käyttäjällä on vaadittu rooli, päästetään jatkamaan
+            if any(rooli in kayttaja['roolit'] for rooli in roolit):
                 return func(*args, **kwargs)
+            # Jos ei oikeaa roolia, ohjataan etusivulle
             else:
-                print("wrong role")
                 return redirect(url_for('index'))
 
         return wrapper

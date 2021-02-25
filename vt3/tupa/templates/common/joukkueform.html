@@ -1,0 +1,29 @@
+<form action="/joukkueet/muokkaa" method="POST">
+    {{ form.csrf_token }}
+    <fieldset>
+        {% if mode=='edit' %}
+        <div id='sarjat'>
+            {{form.sarja.label}}
+            {% for subfield in form.sarja %}
+            <div>
+                {{ subfield }} {{ subfield.label }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div id='joukkue_nimi'>
+            {{ form.nimi.label }} {{ form.nimi }} {% for error in form.nimi.errors %} <span class='error'>{{ error|e }}</span> {% endfor %}
+        </div>
+
+        <div id='joukkue_jasenet'>
+        {{ form.jasenet.label }}
+        {% if form.jasenet.errors|length %} <div class='error'>{{ form.jasenet.errors[0][0]|e }}</div> {% endif %}
+        {{ form.jasenet }} 
+        </div>
+
+        {% if role=='admin' %}
+        Tämä näkyy vain adminille
+        {% endif %}
+        <button type="submit">Tallenna</button>
+    </fieldset>
+</form>

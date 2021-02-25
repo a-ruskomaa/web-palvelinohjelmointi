@@ -3,16 +3,11 @@
 {% block content %}
 
 
-<form action="/login" method="POST">
+<form action="/admin/login" method="POST">
     {{ loginform.csrf_token }}
     <fieldset>
         <div>
-            {% for subfield in loginform.kilpailu %}
-                    <div>{{ subfield }} {{ subfield.label }}</div>
-            {% endfor %}
-        </div>
-        <div>
-            {{ loginform.joukkue.label }} {{ loginform.joukkue }}
+            {{ loginform.kayttaja.label }} {{ loginform.kayttaja }}
         </div>
         <div>
             {{ loginform.salasana.label }} {{ loginform.salasana }}
@@ -26,4 +21,4 @@
 
 {% endblock %}
 
-{% block footer %}Kirjaudu ylläpitäjänä <a href="{{url_for('auth.admin_login')}}">tästä</a>.{% endblock %}
+{% block footer %}Kirjaudu joukkueena <a href="{{url_for('auth.login')}}">tästä</a>.{% endblock %}

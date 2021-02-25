@@ -1,24 +1,8 @@
 {% extends "layout.html" %}
-{% block title %}Joukkue{% endblock %}
-{% block nav %}ADMIN NAVBAR{% endblock %}
-{% block content %}
+{% block title %}Admin{% endblock %}
 
-
-<ul>
-    {% for sarja in sarjat.values() %}
-    <li>{{sarja['nimi']}}</li>
-        <ul>
-        {% for joukkue in sarja['joukkueet'].values() %}
-            <li>{{joukkue['nimi']}}</li>
-                <ul>
-                    {% for jasen in joukkue['jasenet'] %}
-                    <li>{{jasen}}</li>
-                    {% endfor %}
-                </ul>
-        {% endfor %}
-        </ul>
-    {% endfor %}
-</ul>
-
+{% block nav %}
+{% include 'admin/nav.html' %}
 {% endblock %}
-{% block footer %}ADMIN FOOTER{% endblock %}
+
+{% block footer %}{% endblock %}
