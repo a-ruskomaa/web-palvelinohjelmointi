@@ -1,6 +1,7 @@
 from tupa.modules.domain.kilpailu import Kilpailu
 from datetime import datetime
 
+# jäi käyttämättä, mutta pidetään tallessa tulevaa varten
 class Sarja:
 
     def __init__(self,

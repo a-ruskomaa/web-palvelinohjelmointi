@@ -1,11 +1,5 @@
-{% extends "admin/admin_base.html" %}
-{% block title %}Listaa{% endblock %}
-{% block content %}
-
 <ul>
     {% for item in items.values() %}
     <li><a href="{{url_for(urlstring, id=item['id'])}}">{{item['nimi']}}</a></li>
     {% endfor %}
 </ul>
-
-{% endblock %}

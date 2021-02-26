@@ -1,4 +1,136 @@
-.nav {
-    position: absolute;
-    top: 0;
+body {
+  margin: 0;
+}
+
+#content, #footer {
+    margin: 1rem 0.5rem 0.5rem 0.5rem;
+}
+
+.message {
+  font-size: large;
+  font-weight: bold;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.large {
+  font-size: large;
+}
+
+.error {
+  color: red;
+  margin: auto 0.5rem;
+}
+
+.info {
+  color: blue;
+}
+
+.right {
+  float: right;
+}
+
+.topnav {
+  overflow: hidden;
+  background-color: dodgerblue;
+}
+
+.topnav ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  /* overflow: hidden; */
+}
+/* 
+.topnav p {
+    margin: 0;
+    display: block;
+    font-size: large;
+    font-weight: bold;
+    text-align: center;
+    padding: 14px 16px;
+} */
+
+.topnav li, .topnav p {
+    margin: 0;
+    float: left;
+    display: block;
+    font-size: large;
+    font-weight: bold;
+    text-align: center;
+    padding: 14px 16px;
+}
+
+.topnav li a {
+  color: white;
+  text-decoration: none;
+}
+
+.topnav li.right {
+  float: right;
+}
+
+@media screen and (max-width: 600px) {
+  .topnav li.right, .topnav li {
+    float: none;
+    padding: 3px;
+  }
+}
+
+form {
+  margin: 1rem 0rem;
+}
+
+form fieldset > * {
+    margin-bottom: 0.5rem;
+}
+
+form.joukkueform {
+    max-width: 30%;
+    min-width: fit-content;
+}
+
+form.joukkueform li {
+    list-style-type: none;
+}
+
+form.joukkueform label {
+    padding: 0.2rem;
+}
+
+form .input-container {
+  float: right;
+}
+
+form.loginform {
+    max-width: 20%;
+    /* margin: 1rem; */
+}
+
+#jasenet {
+  margin: 0.2rem;
+}
+
+button {
+  background-color: dodgerblue;
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+
+th, td {
+  min-width: 10rem;
+  text-align: center;
 }

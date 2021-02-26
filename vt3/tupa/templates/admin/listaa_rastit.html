@@ -1,0 +1,23 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Kilpailun rastit{% endblock %}
+{% block content %}
+
+<h1>Kilpailun rastit:</h1>
+<table class='rastilista'>
+    <tr>
+        <th>Koodi</th>
+        <th>Lat</th>
+        <th>Lon</th>
+        <th>Leimauksia</th>
+    </tr>
+    {% for rasti in rastit %}
+    <tr>
+        <td>{{ rasti['koodi'] }}</td>
+        <td>{{ rasti['lat'] }}</td>
+        <td>{{ rasti['lon'] }}</td>
+        <td>{{ rasti['leimauksia'] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

@@ -1,0 +1,20 @@
+<table>
+    <tr>
+        <th>Aika</th>
+        <th>Rasti</th>
+    </tr>
+    {% for leimaus in leimaukset %}
+    <tr>
+        <td>
+            {% if role=='admin' %}
+            <a href="{{url_for('admin.muokkaa_leimausta', aika=leimaus['aika'], rasti=leimaus['rasti'], joukkue=leimaus['joukkue'])}}">{{leimaus['aika']}}</a>
+            {% else %}
+            {{leimaus['aika']}}
+            {% endif %}
+        </td>
+        <td>
+            {{leimaus['koodi']}}
+        </td>
+    </tr>
+    {% endfor %}
+</table>

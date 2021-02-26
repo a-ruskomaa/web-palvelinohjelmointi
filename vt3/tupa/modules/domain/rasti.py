@@ -1,5 +1,6 @@
 from tupa.modules.domain.kilpailu import Kilpailu
 
+# jäi käyttämättä, mutta pidetään tallessa tulevaa varten
 class Rasti:
     
     def __init__(self,

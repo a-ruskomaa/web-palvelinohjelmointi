@@ -1,0 +1,12 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Kilpailun sarjat{% endblock %}
+{% block content %}
+
+<h1>Kilpailun sarjat:</h1>
+{% include 'admin/lista_fragment.html' %}
+
+<p>
+    Kaikki kilpailun rastit löydät <a href="{{url_for('admin.listaa_rastit')}}">täältä.</a>
+</p>
+
+{% endblock %}

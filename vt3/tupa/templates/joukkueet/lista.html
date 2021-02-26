@@ -2,12 +2,13 @@
 {% block title %}Listaa{% endblock %}
 {% block content %}
 
+<h1>Kilpailun sarjat ja joukkueet:</h1>
 <ul>
     {% for sarja in sarjat.values() %}
-    <li>{{sarja['nimi']}}</li>
+    <li class='bold large'>{{sarja['nimi']}}</li>
         <ul>
         {% for joukkue in sarja['joukkueet'].values() %}
-            <li>{{joukkue['nimi']}}</li>
+            <li class='large'>{{joukkue['nimi']}}</li>
                 <ul>
                     {% for jasen in joukkue['jasenet'] %}
                     <li>{{jasen}}</li>

@@ -1,0 +1,24 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Muokkaa leimausta{% endblock %}
+{% block content %}
+
+<h1>Muokkaa leimausta</h1>
+<form action="{{url_for('admin.muokkaa_leimausta')}}" method="POST">
+    {{ form.csrf_token }}
+    <fieldset>
+        {{ form.aika.label}}{{form.aika}}
+        {{ form.rasti.label}}{{form.rasti}}
+        {{ form.vanha_aika }}
+        {{ form.vanha_rasti }}
+        {{ form.poista.label }}{{ form.poista }}
+    </fieldset>
+    <button type="submit">Tallenna</button>
+</form>
+
+<a href="{{url_for('admin.muokkaa_joukkuetta')}}">Palaa</a>
+
+{{aika}}
+{{joukkue}}
+{{rasti}}
+
+{% endblock %}

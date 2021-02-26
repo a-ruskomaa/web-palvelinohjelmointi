@@ -2,8 +2,18 @@ from sqlite3.dbapi2 import Row
 import ast
 from . import db
 
+# Moduli sisältää etukäteen muotoiltuja tietokantakutsuja. Valitettavasti en jaksanut näprätä näitä
 
 ######## KANTAKUTSUT ########
+
+def hae_kilpailu(kilpailu_id) -> dict:
+    sql = """SELECT nimi, id FROM kilpailut
+            WHERE id = :kilpailu_id"""
+
+    params = {'kilpailu_id': kilpailu_id}
+    rivi = db.hae_yksi(sql, params)
+
+    return dict(**rivi) if rivi else None
 
 
 def hae_kilpailut() -> dict:
@@ -11,9 +21,7 @@ def hae_kilpailut() -> dict:
 
     rivit = db.hae_monta(sql)
     
-    kilpailut = {rivi['id']:{key:rivi[key] for key in rivi.keys()} for rivi in rivit}
-
-    return kilpailut
+    return _luo_dict_riveista(rivit)
 
 
 def hae_sarjat(kilpailu_id: int) -> dict:
@@ -81,15 +89,35 @@ def hae_joukkue(joukkue_id):
     return _luo_joukkue_dict(rivi)
 
 
-def tallenna_joukkue(joukkue: dict):
+
+def paivita_joukkue(joukkue: dict):
     sql = """UPDATE joukkueet SET
             nimi = :nimi,
+            salasana = :salasana,
             sarja = :sarja,
             jasenet = :jasenet
             WHERE id = :id"""
 
     params = joukkue
-    db.lisaa(sql, params)
+    db.kirjoita(sql, params)
+
+
+def lisaa_joukkue(joukkue: dict):
+    sql = """INSERT INTO joukkueet
+            (nimi, sarja, jasenet) VALUES
+            (:nimi, :sarja, :jasenet)"""
+
+    params = joukkue
+    return db.kirjoita(sql, params)
+
+
+def poista_joukkue(joukkue_id: int):
+    sql = """DELETE FROM joukkueet
+            WHERE joukkueet.id = :joukkue_id"""
+    
+    params = {'joukkue_id': joukkue_id}
+    return db.kirjoita(sql, params)
+
 
 
 def hae_joukkue_nimella(kilpailu_id: int, joukkue_nimi: str) -> dict:
@@ -112,10 +140,102 @@ def hae_joukkue_nimella(kilpailu_id: int, joukkue_nimi: str) -> dict:
     return dict(**rivi) if rivi else None
 
 
-######## HELPERS ########
+def hae_kilpailun_rastit(kilpailu_id: int):
+    sql = """SELECT id, koodi, lat, lon FROM rastit
+            WHERE rastit.kilpailu = :kilpailu_id"""
 
+    params = {'kilpailu_id': kilpailu_id}
+
+    rivit = db.hae_monta(sql, params)
+    return _luo_taulukko_riveista(rivit)
+
+
+def hae_kilpailun_rastit_ja_leimaukset(kilpailu_id: int):
+    sql = """SELECT id, koodi, lat, lon, Count(tupa.aika) AS leimauksia FROM rastit
+            LEFT JOIN tupa ON
+            tupa.rasti = rastit.id
+            WHERE rastit.kilpailu = :kilpailu_id
+            GROUP BY rastit.id
+            ORDER BY rastit.koodi DESC"""
+
+    params = {'kilpailu_id': kilpailu_id}
+
+    rivit = db.hae_monta(sql, params)
+    return _luo_taulukko_riveista(rivit)
+
+
+def hae_joukkueen_leimaukset(joukkue_id: int):
+    sql = """SELECT aika, rasti, koodi, joukkue FROM tupa
+            JOIN rastit ON
+            tupa.rasti = rastit.id
+            WHERE joukkue = :joukkue_id"""
+    
+    params = {'joukkue_id': joukkue_id}
+
+    rivit = db.hae_monta(sql, params)
+    return _luo_taulukko_riveista(rivit)
+
+
+def paivita_leimaus(joukkue_id: int, uusi_aika: str, uusi_rasti_id: int, vanha_aika: str, vanha_rasti_id: int):
+    sql = """UPDATE tupa SET
+            aika = :uusi_aika,
+            rasti = :uusi_rasti_id
+            WHERE joukkue = :joukkue_id
+            AND aika = :vanha_aika
+            AND rasti = :vanha_rasti_id"""
+
+    params = {
+        'joukkue_id': joukkue_id,
+        'uusi_aika': uusi_aika,
+        'uusi_rasti_id': uusi_rasti_id,
+        'vanha_aika': vanha_aika,
+        'vanha_rasti_id': vanha_rasti_id
+    }
+
+    return db.kirjoita(sql, params)
+
+
+def poista_leimaus(joukkue_id: int, aika: str, rasti_id: int):
+    sql = """DELETE FROM tupa
+            WHERE joukkue = :joukkue_id
+            AND aika = :aika
+            AND rasti = :rasti_id"""
+
+    params = {
+        'joukkue_id': joukkue_id,
+        'aika': aika,
+        'rasti_id': rasti_id
+    }
+
+    return db.kirjoita(sql, params)
+
+
+######## APUFUNKTIOT ########
+
+# nopeasti kyhättyjä apufunktioita, joilla saa muotoiltua tietokannasta haetun
+# datan helpommin kásiteltävään muotoon
 
 def _luo_sarja_dict(rivit):
+    """ Luo monitasoisen dictionaryn haetuista sarjoista.
+
+    Jos annetut rivit sisältävät myös joukkueiden tiedot, lisätään
+    joukkueet mukaan palautettavaan tietorakenteeseen.
+
+    Palautettu muoto:
+    {
+        sarja1_id: {
+            id: id.
+            nimi: nimi,
+            joukkueet: {
+                joukkue1_id: { ... },
+                joukkue2_id: { ... }
+            }
+        },
+        sarja2_id: {
+             ...
+        }
+    }
+    """
     sarjat = {}
     for rivi in rivit:
         sarja_id = rivi['sarja_id']
@@ -136,6 +256,9 @@ def _luo_sarja_dict(rivit):
 
 
 def _luo_joukkue_dict(rivi: Row):
+    """ Luo dictionaryn joukkueen tiedoista.
+    Salasanaa tai sarjaa ei ole pakko olla annetussa rivissä. """
+
     joukkue_id = rivi['joukkue_id']
     joukkue_nimi = rivi['joukkue_nimi']
     joukkue_jasenet = rivi['joukkue_jasenet']
@@ -151,3 +274,29 @@ def _luo_joukkue_dict(rivi: Row):
             }
 
 
+def _luo_dict_riveista(rivit):
+    """ Muuntaa rivit automaattisesti pythonin dictionaryksi muodossa:
+    {
+        id1: {
+            key1: value1,
+            key2: value2,
+            ...
+        },
+        id2: { ... }
+    }
+    """
+    return {rivi['id']:{key:rivi[key] for key in rivi.keys()} for rivi in rivit}
+
+
+def _luo_taulukko_riveista(rivit):
+    """ Muuntaa rivit automaattisesti taulukoksi hakemistoja muodossa:
+    [{
+        key1: value1,
+        key2: value2,
+        ...
+    },
+    {
+        ...
+    }]
+    """
+    return [{key:rivi[key] for key in rivi.keys()} for rivi in rivit]

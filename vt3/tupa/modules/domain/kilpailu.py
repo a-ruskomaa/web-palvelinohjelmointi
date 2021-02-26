@@ -1,5 +1,6 @@
 from datetime import datetime
 
+# jäi käyttämättä, mutta pidetään tallessa tulevaa varten
 class Kilpailu:
 
     def __init__(self,

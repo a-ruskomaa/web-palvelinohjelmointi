@@ -1,0 +1,12 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Sarjan joukkueet{% endblock %}
+{% block content %}
+
+<h1>Sarjan joukkueet:</h1>
+{% if viesti %}
+<span class="{{viesti['class']}}">{{ viesti['viesti'] }}</span>
+{% endif %}
+{% include 'admin/lista_fragment.html' %}
+{% include 'common/joukkueform.html' %}
+
+{% endblock %}

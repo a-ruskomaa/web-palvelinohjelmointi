@@ -1,19 +1,19 @@
 import hashlib
 import ast
 from tupa.modules.domain.sarja import Sarja
-from tupa.helpers.errors import AuthenticationError, CustomValidationError
+from tupa.modules.helpers.errors import AuthenticationError, CustomValidationError
 
+# tämä luokka jäi hyvin pitkälti hyödyntämättä erinäisistä syistä, mutta pidetään se tallessa tulevaa varten
 class Joukkue:
     
-    # TODO lisää type error tarkistus konstruktorin kutsuun
     def __init__(self, id: int = -1, nimi: str = "", salasana: str = None, sarja: int = None, jasenet: list = []):
         self.id = id
-        self.nimi = self._tarkista_nimi(nimi)
+        self.nimi = nimi
         self.salasana = salasana
         self.sarja = sarja
         if type(jasenet) == str:
             jasenet = ast.literal_eval(jasenet)
-        self.jasenet = self._tarkista_jasenet(jasenet)
+        self.jasenet = jasenet
 
     
     def _tarkista_jasenet(self, jasenet: list):

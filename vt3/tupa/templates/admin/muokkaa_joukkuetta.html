@@ -1,0 +1,13 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Muokkaa joukkuetta{% endblock %}
+{% block content %}
+
+<h1>Muokkaa joukkuetta</h1>
+{% if viesti %}
+<span class="{{viesti['class']}}">{{ viesti['viesti'] }}</span>
+{% endif %}
+{% include 'common/joukkueform.html' %}
+<a href="{{url_for('admin.listaa_joukkueet')}}">Palaa</a>
+{% include 'common/leimauslista.html' %}
+
+{% endblock %}
