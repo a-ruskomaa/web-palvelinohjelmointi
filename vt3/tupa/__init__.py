@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask, render_template, session
 from flask.helpers import url_for
 from werkzeug.utils import redirect
@@ -8,7 +9,9 @@ def create_app():
     app = Flask(__name__)
 
     # ladataan asetukset (mm. tietokannan osoite) tiedostosta
-    app.config.from_pyfile(os.path.join('config', 'config.py'))
+    path_to_config = os.path.join('config', 'config.py')
+    logging.info(path_to_config)
+    app.config.from_pyfile(path_to_config)
 
     # alustetaan tietokanta
     from tupa.modules.data import db
