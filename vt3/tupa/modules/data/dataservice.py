@@ -8,7 +8,7 @@ from . import db
 
 def hae_kilpailu(kilpailu_id) -> dict:
     sql = """SELECT nimi, id FROM kilpailut
-            WHERE id = ?"""
+            WHERE id = %s"""
 
     params = (kilpailu_id,)
     rivi = db.hae_yksi(sql, params)
@@ -28,7 +28,7 @@ def hae_sarjat(kilpailu_id: int) -> dict:
     sql = """SELECT id AS sarja_id,
                     nimi AS sarja_nimi
             FROM sarjat
-            WHERE sarjat.kilpailu = ?
+            WHERE sarjat.kilpailu = %s
             ORDER BY sarja_nimi ASC"""
 
     params = (kilpailu_id,)
@@ -46,7 +46,7 @@ def hae_sarjat_ja_joukkueet(kilpailu_id: int) -> dict:
     FROM joukkueet
     JOIN sarjat ON joukkueet.sarja = sarjat.id
     JOIN kilpailut ON sarjat.kilpailu = kilpailut.id
-    WHERE sarjat.kilpailu = ?
+    WHERE sarjat.kilpailu = %s
     ORDER BY
         sarja_nimi ASC,
         lower(joukkue_nimi) ASC"""
@@ -64,7 +64,7 @@ def hae_joukkueet(sarja_id: int) -> dict:
                     salasana AS joukkue_salasana,
                     jasenet AS joukkue_jasenet
             FROM joukkueet
-            WHERE joukkueet.sarja = ?
+            WHERE joukkueet.sarja = %s
             ORDER BY lower(joukkue_nimi) ASC"""
 
     params = (sarja_id,)
@@ -82,7 +82,7 @@ def hae_joukkue(joukkue_id):
                     salasana AS joukkue_salasana,
                     jasenet AS joukkue_jasenet
             FROM joukkueet
-            WHERE joukkueet.id = ?"""
+            WHERE joukkueet.id = %s"""
 
     params = (joukkue_id,)
     rivi = db.hae_yksi(sql, params)
@@ -92,11 +92,11 @@ def hae_joukkue(joukkue_id):
 
 def paivita_joukkue(joukkue: dict):
     sql = """UPDATE joukkueet SET
-            nimi = ?,
-            salasana = ?,
-            sarja = ?,
-            jasenet = ?
-            WHERE id = ?"""
+            nimi = %s,
+            salasana = %s,
+            sarja = %s,
+            jasenet = %s
+            WHERE id = %s"""
 
     params = (joukkue['nimi'], joukkue['salasana'], joukkue['sarja'], joukkue['jasenet'], joukkue['id'])
     db.kirjoita(sql, params)
@@ -105,7 +105,7 @@ def paivita_joukkue(joukkue: dict):
 def lisaa_joukkue(joukkue: dict):
     sql = """INSERT INTO joukkueet
             (nimi, sarja, jasenet) VALUES
-            (?, ?, ?)"""
+            (%s, %s, %s)"""
 
     params = (joukkue['nimi'], joukkue['sarja'], joukkue['jasenet'])
     return db.kirjoita(sql, params)
@@ -113,7 +113,7 @@ def lisaa_joukkue(joukkue: dict):
 
 def poista_joukkue(joukkue_id: int):
     sql = """DELETE FROM joukkueet
-            WHERE joukkueet.id = ?"""
+            WHERE joukkueet.id = %s"""
     
     params = (joukkue_id,)
     return db.kirjoita(sql, params)
@@ -129,9 +129,9 @@ def hae_joukkue_nimella(kilpailu_id: int, joukkue_nimi: str) -> dict:
             FROM joukkueet
             JOIN sarjat ON joukkueet.sarja = sarjat.id
             JOIN kilpailut ON sarjat.kilpailu = kilpailut.id
-            WHERE sarjat.kilpailu = ?
+            WHERE sarjat.kilpailu = %s
             AND trim(upper(joukkueet.nimi))
-            = trim(upper(?))"""
+            = trim(upper(%s))"""
             
     params = (kilpailu_id, joukkue_nimi)
 
@@ -141,7 +141,7 @@ def hae_joukkue_nimella(kilpailu_id: int, joukkue_nimi: str) -> dict:
 
 def hae_kilpailun_rastit(kilpailu_id: int):
     sql = """SELECT id, koodi, lat, lon FROM rastit
-            WHERE rastit.kilpailu = ?"""
+            WHERE rastit.kilpailu = %s"""
 
     params = (kilpailu_id,)
 
@@ -153,7 +153,7 @@ def hae_kilpailun_rastit_ja_leimaukset(kilpailu_id: int):
     sql = """SELECT id, koodi, lat, lon, Count(tupa.aika) AS leimauksia FROM rastit
             LEFT JOIN tupa ON
             tupa.rasti = rastit.id
-            WHERE rastit.kilpailu = ?
+            WHERE rastit.kilpailu = %s
             GROUP BY rastit.id
             ORDER BY rastit.koodi DESC"""
 
@@ -167,7 +167,7 @@ def hae_joukkueen_leimaukset(joukkue_id: int):
     sql = """SELECT aika, rasti, koodi, joukkue FROM tupa
             JOIN rastit ON
             tupa.rasti = rastit.id
-            WHERE joukkue = ?"""
+            WHERE joukkue = %s"""
     
     params = (joukkue_id,)
 
@@ -177,11 +177,11 @@ def hae_joukkueen_leimaukset(joukkue_id: int):
 
 def paivita_leimaus(joukkue_id: int, uusi_aika: str, uusi_rasti_id: int, vanha_aika: str, vanha_rasti_id: int):
     sql = """UPDATE tupa SET
-            aika = ?,
-            rasti = ?
-            WHERE joukkue = ?
-            AND aika = ?
-            AND rasti = ?"""
+            aika = %s,
+            rasti = %s
+            WHERE joukkue = %s
+            AND aika = %s
+            AND rasti = %s"""
 
     params = (uusi_aika, uusi_rasti_id, joukkue_id, vanha_aika, vanha_rasti_id)
 
@@ -190,9 +190,9 @@ def paivita_leimaus(joukkue_id: int, uusi_aika: str, uusi_rasti_id: int, vanha_a
 
 def poista_leimaus(joukkue_id: int, aika: str, rasti_id: int):
     sql = """DELETE FROM tupa
-            WHERE joukkue = ?
-            AND aika = ?
-            AND rasti = ?"""
+            WHERE joukkue = %s
+            AND aika = %s
+            AND rasti = %s"""
 
     params = (joukkue_id, aika, rasti_id)
 
