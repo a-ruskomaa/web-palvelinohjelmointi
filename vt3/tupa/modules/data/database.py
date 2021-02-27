@@ -84,21 +84,26 @@ class Database:
 
 
     def kirjoita(self, query: str, params: dict = None, commit: bool = True) -> int:
-        """ Suorittaa tietokantaan kirjoitusoperaation. """
+        """ Suorittaa tietokantaan kirjoitusoperaation. Kirjoitusoperaatiot 
+        kommitoidaan automaattisesti.
+        
+        Koska tietokantayhteys on HTTP-pyyntökohtainen, voidaan samaan transaktioon liittää
+        useita kirjoitusoperaatioita asettamalla parametriksi commit=False. Viimeisen operaation
+        tulee tällöin huolehtia transaktion kommitoinnista."""
 
         cur = self.tee_kutsu(query, params, commit)
         vastaus = cur.lastrowid
         return vastaus
 
-    def commit(self):
-        con = self.avaa_yhteys()
-        con.commit()
 
     def tee_kutsu(self, query: str, params: dict = None, commit: bool = False) -> MySQLCursorBufferedDict:
-        """ Delegoi tietokantakutsun tietokantakohteiselle toteutukselle. """
+        """ Delegoi tietokantakutsun tietokantakohteiselle toteutukselle. 
+        'Autocommit' on pois päältä jottei sitä turhaan kutsuta lukuoperaatoissa."""
         con = self.avaa_yhteys()
 
         vastaus = self.db.tee_kutsu(con, query, params)
+
+        # Päätetään kirjoitusoperaation transaktio
         if commit:
             con.commit()
         return vastaus
@@ -113,6 +118,9 @@ class SqliteDb(Database):
         # haetaan tietokannan polku asetuksista
         self.path = app.config['DB_PATH']
 
+    def _convert_query(self, query: str) -> str:
+        """ Muuntaa sql-merkkijonon parametrit SQLiten ymmärtämään muotoon """
+        return query.replace('%s', '?')
 
     def avaa_yhteys(self):
         conn = sqlite3.connect(self.path, isolation_level=None)
@@ -131,9 +139,9 @@ class SqliteDb(Database):
         Parametreja ei tarkisteta, vaan niiden on vastattava kutsua."""
         
         if params:
-            return con.execute(query, params)
+            return con.execute(self._convert_query(query), params)
         else:
-            return con.execute(query)
+            return con.execute(self._convert_query(query))
 
 class MySQLDb(Database):
 
