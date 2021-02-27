@@ -1,10 +1,9 @@
 import sqlite3
-from flask.globals import current_app
 import mysql.connector
-from mysql.connector.cursor import MySQLCursorBufferedDict
 import mysql.connector.pooling
+from mysql.connector.cursor import MySQLCursorBufferedDict
 from sqlite3.dbapi2 import Cursor, Row
-from typing import List
+from typing import List, Union
 from flask import g
 
 class Database:
@@ -94,14 +93,14 @@ class Database:
         return vastaus
 
 
-    def tee_kutsu(self, query: str, params: dict = None, commit: bool = False) -> MySQLCursorBufferedDict:
-        """ Delegoi tietokantakutsun tietokantakohteiselle toteutukselle. 
-        'Autocommit' on pois päältä jottei sitä turhaan kutsuta lukuoperaatoissa."""
+    def tee_kutsu(self, query: str, params: dict = None, commit: bool = False) -> Union[Cursor,MySQLCursorBufferedDict]:
+        """ Delegoi tietokantakutsun tietokantakohteiselle toteutukselle. """
         con = self.avaa_yhteys()
 
         vastaus = self.db.tee_kutsu(con, query, params)
 
-        # Päätetään kirjoitusoperaation transaktio
+        # päätetään kirjoitusoperaation transaktio
+        # commit on oletuksena False jotta ei kutsuta turhaan lukuoperaatioissa
         if commit:
             con.commit()
         return vastaus

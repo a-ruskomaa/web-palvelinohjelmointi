@@ -22,8 +22,9 @@ def create_app():
     app.register_blueprint(auth.bp)
     app.register_blueprint(joukkueet.bp)
 
-    app.register_error_handler(mysql.connector.Error, lambda e: render_template('common/error.html', message="Jotain meni pieleen..."))
-    app.register_error_handler(sqlite3.Error, lambda e: render_template('common/error.html', message="Jotain meni pieleen..."))
+    # näytetään virhesivu jos tietokantakutsu aiheuttaa virhetilanteen
+    app.register_error_handler(mysql.connector.Error, lambda: render_template('common/error.html', message="Jotain meni pieleen..."))
+    app.register_error_handler(sqlite3.Error, lambda: render_template('common/error.html', message="Jotain meni pieleen..."))
 
     @app.route('/', methods=["GET"])
     def index():

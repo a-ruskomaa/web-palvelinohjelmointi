@@ -51,20 +51,22 @@ def listaa_sarjat():
     """ Reitti, jonka kautta listataan kaikki valitun kilpailun sarjat """
 
     # haetaan valittu kilpailu, ensisijaisesti pyynnön parametreista, toissijaisesti sessiosta
-    valittu = session.get('valittu', {})
-    valittu_kilpailu = request.args.get('id', valittu.get('kilpailu'))
+    valittu_kilpailu = request.args.get('id', session.get('valittu').get('kilpailu'))
 
     # jos kilpailua ei ole valittu, ohjataan kilpailulistaukseen
     if not valittu_kilpailu:
         return redirect(url_for('admin.listaa_kilpailut'))
 
     # tallennetaan tieto valitusta kilpailusta sessioon
-    valittu['kilpailu'] = valittu_kilpailu
-    session['valittu'] = valittu
+    session['valittu'] = {
+        'kilpailu': valittu_kilpailu,
+        'sarja': None,
+        'joukkue': None
+    }
 
     # haetaan sarjat ja näytetään sivu
     sarjat = hae_sarjat(kilpailu_id=valittu_kilpailu)
-    return render_template('admin/listaa_sarjat.html', items=sarjat, valittu=valittu, urlstring='admin.listaa_joukkueet')
+    return render_template('admin/listaa_sarjat.html', items=sarjat, urlstring='admin.listaa_joukkueet')
 
 
 
@@ -76,16 +78,19 @@ def listaa_joukkueet():
     # turvonnut funktio, joka pitäisi pilkkoa pienemmiksi mutta ei jaksa...
 
     # haetaan valittu sarja, ensisijaisesti pyynnön parametreista, toissijaisesti sessiosta
-    valittu = session.get('valittu', {})
-    valittu_sarja = request.args.get('id', valittu.get('sarja'))
+    valittu_sarja = request.args.get('id', session.get('valittu').get('sarja'))
+    valittu_kilpailu = session.get('valittu').get('kilpailu')
 
     # jos sarjaa ei ole valittu, ohjataan sarjalistaukseen
     if not valittu_sarja:
         return redirect(url_for('admin.listaa_sarjat'))
 
     # tallennetaan tieto valitusta sarjasta sessioon
-    valittu['sarja'] = valittu_sarja
-    session['valittu'] = valittu
+    session['valittu'] = {
+        'kilpailu': valittu_kilpailu,
+        'sarja': valittu_sarja,
+        'joukkue': None
+    }
 
     # luodaan lomake uuden joukkueen lisäämistä varten
     form = LisaysForm()
@@ -95,7 +100,6 @@ def listaa_joukkueet():
 
     # tarkistetaan lomake jos POST-pyyntö
     if form.validate_on_submit():
-        valittu_kilpailu = valittu.get('kilpailu')
         toinen = hae_joukkue_nimella(valittu_kilpailu, form.nimi.data)
 
         if toinen:
@@ -128,7 +132,6 @@ def listaa_joukkueet():
                             items=joukkueet,
                             form=form,
                             viesti=viesti,
-                            valittu=valittu,
                             urlstring='admin.muokkaa_joukkuetta',
                             action_url=url_for('admin.listaa_joukkueet'))
 
@@ -142,13 +145,20 @@ def muokkaa_joukkuetta():
     # toinen turvonnut funktio, mutta en jaksa pilkkoa...
 
     # haetaan valittu joukkue, ensisijaisesti pyynnön parametreista, toissijaisesti sessiosta
-    valittu = session.get('valittu', {})
-    valittu_joukkue = request.args.get('id', valittu.get('joukkue'))
-    valittu_kilpailu = valittu.get('kilpailu')
+    valittu_joukkue = request.args.get('id', session.get('valittu').get('joukkue'))
+    valittu_sarja = session.get('valittu').get('sarja')
+    valittu_kilpailu = session.get('valittu').get('kilpailu')
     
     # jos joukkuetta (tai kilpailua) ei ole valittu, ohjataan joukkuelistaukseen
     if not (valittu_joukkue or valittu_kilpailu):
         return redirect(url_for('admin.listaa_joukkueet'))
+
+    # tallennetaan tieto valitusta joukkueesta sessioon
+    session['valittu'] = {
+        'kilpailu': valittu_kilpailu,
+        'sarja': valittu_sarja,
+        'joukkue': valittu_joukkue
+    }
 
     # haetaan kaikki valitun kilpailun sarjat tietokannasta ja muokataan tupleiksi
     sarjat = hae_sarjat(kilpailu_id=valittu_kilpailu)
@@ -170,10 +180,6 @@ def muokkaa_joukkuetta():
     # jos sivu ladataan ensimmäistä kertaa, täytetään muokkauslomake valitun joukkueen tiedoilla
     if request.method == 'GET':
         
-        # tallennetaan joukkueen valinta sessioon
-        valittu['joukkue'] = valittu_joukkue
-        session['valittu'] = valittu
-
         # muunnetaan joukkue olioksi jotta ei tarvitse mapata kenttiä käsin
         joukkue = Joukkue(**joukkue_dict)
         form.process(obj=joukkue)
@@ -228,7 +234,6 @@ def muokkaa_joukkuetta():
                             mode='edit',
                             role='admin',
                             viesti=viesti,
-                            valittu=valittu,
                             action_url=url_for('admin.muokkaa_joukkuetta'))
 
 
@@ -238,8 +243,7 @@ def listaa_rastit():
     """ Kaikki valitun kilpailun rastit näyttävä sivu """
 
     # haetaan valitun kilpailun tiedot sessiosta
-    valittu = session.get('valittu', {})
-    valittu_kilpailu = valittu.get('kilpailu')
+    valittu_kilpailu = session.get('valittu').get('kilpailu')
 
     # jos kilpailua ei ole valittu, ohjataan takaisin kilpailulistaukseen
     if not valittu_kilpailu:
@@ -247,7 +251,7 @@ def listaa_rastit():
     
     # haetaan rastit ja näytetään sivu
     rastit = hae_kilpailun_rastit_ja_leimaukset(kilpailu_id=valittu_kilpailu)
-    return render_template('admin/listaa_rastit.html', rastit=rastit, valittu=valittu)
+    return render_template('admin/listaa_rastit.html', rastit=rastit)
 
 
 
@@ -256,11 +260,10 @@ def muokkaa_leimausta():
     """ Leimauksen muokkaukseen käytettävä sivu """
     
     # haetaan valitun kilpailun tiedot sessiosta
-    valittu = session.get('valittu', {})
-    valittu_kilpailu = valittu.get('kilpailu')
+    valittu_kilpailu = session.get('valittu').get('kilpailu')
 
     # haetaan leimauksen tiedot joko pyynnön parametreista tai lomakkeelta
-    joukkue_id = request.args.get('joukkue', valittu.get('joukkue'))
+    joukkue_id = request.args.get('joukkue', session.get('valittu').get('joukkue'))
     vanha_aika = request.args.get('aika', request.form.get('vanha_aika'))
     vanha_rasti = request.args.get('rasti', request.form.get('vanha_rasti'))
 
@@ -304,4 +307,4 @@ def muokkaa_leimausta():
         print(form.errors)
 
 
-    return render_template('admin/muokkaa_leimausta.html', form=form, valittu=valittu)
+    return render_template('admin/muokkaa_leimausta.html', form=form)
