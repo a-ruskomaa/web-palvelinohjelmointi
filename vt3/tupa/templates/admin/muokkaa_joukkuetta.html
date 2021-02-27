@@ -7,7 +7,9 @@
 <span class="{{viesti['class']}}">{{ viesti['viesti'] }}</span>
 {% endif %}
 {% include 'common/joukkueform.html' %}
-<a href="{{url_for('admin.listaa_joukkueet')}}">Palaa</a>
+<a href="{{url_for('admin.listaa_joukkueet')}}">Takaisin joukkuelistaukseen</a>
+
+<h2>Joukkueen rastileimaukset</h2>
 {% include 'common/leimauslista.html' %}
 
 {% endblock %}

@@ -1,4 +1,7 @@
 import sqlite3
+from flask.globals import current_app
+import mysql.connector
+import mysql.connector.pooling
 from sqlite3.dbapi2 import Cursor, Row
 from typing import List
 from flask import g
@@ -32,7 +35,7 @@ class Database:
         if app.env == 'development':
             self.db = SqliteDb(db_path)
         else:
-            self.db = MySQLDb(db_path)
+            self.db = MySQLDb(app)
 
 
     def avaa_yhteys(self):
@@ -65,7 +68,7 @@ class Database:
     def hae_monta(self, query: str, params: dict = None) -> List[Row]:
         """ Suorittaa tietokantaan monta riviä palauttavan haun. """
 
-        cur = self._tee_kutsu(query, params)
+        cur = self.db.tee_kutsu(query, params)
         vastaus = cur.fetchall()
         cur.close()
 
@@ -75,7 +78,7 @@ class Database:
     def hae_yksi(self, query: str, params: dict = None) -> Row:
         """ Suorittaa tietokantaan yhden rivin palauttavan haun. """
 
-        cur = self._tee_kutsu(query, params)
+        cur = self.db.tee_kutsu(query, params)
         vastaus = cur.fetchone()
         cur.close()
 
@@ -85,21 +88,12 @@ class Database:
     def kirjoita(self, query: str, params: dict = None) -> int:
         """ Suorittaa tietokantaan kirjoitusoperaation. """
 
-        cur = self._tee_kutsu(query, params)
+        cur = self.db.tee_kutsu(query, params)
         vastaus = cur.lastrowid
 
         return vastaus
 
 
-    def _tee_kutsu(self, query: str, params: dict = None) -> Cursor:
-        """ Suorittaa tietokantaan halutun kutsun parametreilla tai ilman.
-        Parametreja ei tarkisteta, vaan niiden on vastattava kutsua."""
-        con = self.avaa_yhteys()
-        
-        if params:
-            return con.execute(query, params)
-        else:
-            return con.execute(query)
 
 
 class SqliteDb(Database):
@@ -120,13 +114,40 @@ class SqliteDb(Database):
         if self.conn is not None:
             self.conn.close()
 
+    def tee_kutsu(self, query: str, params: dict = None) -> Cursor:
+        """ Suorittaa tietokantaan halutun kutsun parametreilla tai ilman.
+        Parametreja ei tarkisteta, vaan niiden on vastattava kutsua."""
+        con = self.avaa_yhteys()
+        
+        if params:
+            return con.execute(query, params)
+        else:
+            return con.execute(query)
 
 class MySQLDb(Database):
-    def __init__(self, path:str):
-        self.path = path
+
+    def __init__(self, app):
+        self.config = {
+            "database": app.config['DB_NAME'],
+            "user": app.config['DB_USER'],
+            "passwd": app.config['DB_PW'],
+            "host": app.config['DB_HOST']
+        }
 
     def avaa_yhteys(self):
-        pass
+        cnx = mysql.connector.connect(**self.config)
+        return cnx
 
     def sulje_yhteys(self):
         pass
+
+    def tee_kutsu(self, query: str, params: dict = None) -> Cursor:
+        """ Suorittaa tietokantaan halutun kutsun parametreilla tai ilman.
+        Parametreja ei tarkisteta, vaan niiden on vastattava kutsua."""
+        cnx = self.avaa_yhteys()
+        cursor = cnx.cursor(dictionary=True, buffered=True)
+        
+        if params:
+            return cursor.execute(query, params)
+        else:
+            return cursor.execute(query)

@@ -106,7 +106,7 @@ def admin_login():
             loginerrors.append('Kirjautuminen epäonnistui')
     
     # näytetään kirjautumissivu
-    return render_template('common/login.html', loginform=form, loginerrors=loginerrors, role='admin')
+    return render_template('common/login.html', loginform=form, loginerrors=loginerrors, body_class="bg-lightblue", role='admin')
 
 
 @bp.route('/logout')

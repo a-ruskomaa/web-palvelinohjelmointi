@@ -73,7 +73,7 @@ def listaa_sarjat():
 def listaa_joukkueet():
     """ Reitti, jonka kautta listataan kaikki valitun sarjan joukkueet """
 
-    # jäätävän turvonnut funktio, joka pitäisi pilkkoa pienemmiksi mutta ei jaksa...
+    # turvonnut funktio, joka pitäisi pilkkoa pienemmiksi mutta ei jaksa...
 
     # haetaan valittu sarja, ensisijaisesti pyynnön parametreista, toissijaisesti sessiosta
     valittu = session.get('valittu', {})
@@ -140,7 +140,7 @@ def listaa_joukkueet():
 def muokkaa_joukkuetta():
     """ Joukkueen muokkaukseen käytettävä sivu """
 
-    # vähän tuli turvonnut funktio, mutta en jaksa pilkkoa...
+    # toinen turvonnut funktio, mutta en jaksa pilkkoa...
 
     # haetaan valittu joukkue, ensisijaisesti pyynnön parametreista, toissijaisesti sessiosta
     valittu = session.get('valittu', {})
@@ -195,7 +195,7 @@ def muokkaa_joukkuetta():
         else:
             toinen = hae_joukkue_nimella(valittu_kilpailu, form.nimi.data)
 
-            if toinen and toinen['id'] != valittu_joukkue:
+            if toinen and int(toinen['id']) != int(valittu_joukkue):
                 form.nimi.errors.append("Joukkue on jo olemassa!")
             else:
                 # koostetaan lomakkeen tiedot dictionaryyn
@@ -293,6 +293,7 @@ def muokkaa_leimausta():
             # haetaan päivitetyt tiedot lomakkeelta ja päivitetään kanta
             uusi_aika = form.aika.data.isoformat(sep=' ')
             uusi_rasti = form.rasti.data
+            print(joukkue_id, uusi_aika, uusi_rasti, vanha_aika, vanha_rasti)
             paivita_leimaus(joukkue_id, uusi_aika, uusi_rasti, vanha_aika, vanha_rasti)
 
         # uudelleenohjataan joukkueen muokkaussivulle
