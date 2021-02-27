@@ -108,7 +108,7 @@ def lisaa_joukkue(joukkue: dict):
             (%s, %s, %s)"""
 
     params = (joukkue['nimi'], joukkue['sarja'], joukkue['jasenet'])
-    return db.kirjoita(sql, params)
+    return db.kirjoita(sql, params, commit=False)
 
 
 def poista_joukkue(joukkue_id: int):

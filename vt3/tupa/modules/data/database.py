@@ -1,6 +1,7 @@
 import sqlite3
 from flask.globals import current_app
 import mysql.connector
+from mysql.connector.cursor import MySQLCursorBufferedDict
 import mysql.connector.pooling
 from sqlite3.dbapi2 import Cursor, Row
 from typing import List
@@ -82,19 +83,25 @@ class Database:
         return vastaus
 
 
-    def kirjoita(self, query: str, params: dict = None) -> int:
+    def kirjoita(self, query: str, params: dict = None, commit: bool = True) -> int:
         """ Suorittaa tietokantaan kirjoitusoperaation. """
 
-        cur = self.tee_kutsu(query, params)
+        cur = self.tee_kutsu(query, params, commit)
         vastaus = cur.lastrowid
-
         return vastaus
 
-    def tee_kutsu(self, query: str, params: dict = None) -> Cursor:
+    def commit(self):
+        con = self.avaa_yhteys()
+        con.commit()
+
+    def tee_kutsu(self, query: str, params: dict = None, commit: bool = False) -> MySQLCursorBufferedDict:
         """ Delegoi tietokantakutsun tietokantakohteiselle toteutukselle. """
         con = self.avaa_yhteys()
 
-        return self.db.tee_kutsu(con, query, params)
+        vastaus = self.db.tee_kutsu(con, query, params)
+        if commit:
+            con.commit()
+        return vastaus
 
 
 

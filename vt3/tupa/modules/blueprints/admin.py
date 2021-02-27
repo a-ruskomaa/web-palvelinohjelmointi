@@ -109,7 +109,6 @@ def listaa_joukkueet():
                 'jasenet': str([_field.data for _field in form.jasenet if _field.data != ""])
             }
 
-            # tässä pitäisi oikeasti ehdottomasti käyttää transaktiota, mutta nyt oikaisen kun en jaksa enää alkaa säätämään autocommittia pois...
             # lisätään uusi joukkue ilman salasanaa, funktio palauttaa lisätyn id:n
             joukkue['id'] = lisaa_joukkue(joukkue)
             # hashataan salasana saadulla id:llä
