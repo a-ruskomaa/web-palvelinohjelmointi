@@ -125,6 +125,7 @@ class SqliteDb(Database):
 class MySQLDb(Database):
 
     def __init__(self, app):
+        print("******** INITIALIZING MYSQL ********")
         self.config = {
             "database": app.config.get('DB_NAME'),
             "user": app.config.get('DB_USER'),
@@ -133,6 +134,7 @@ class MySQLDb(Database):
         }
 
     def avaa_yhteys(self):
+        print("******** OPENING DB CONNECTION ********")
         cnx = mysql.connector.connect(**self.config)
         return cnx
 
@@ -143,6 +145,7 @@ class MySQLDb(Database):
         """ Suorittaa tietokantaan halutun kutsun parametreilla tai ilman.
         Parametreja ei tarkisteta, vaan niiden on vastattava kutsua."""
         cnx = self.avaa_yhteys()
+        print("******** OPENING DB CONNECTION ********")
         cursor = cnx.cursor(dictionary=True, buffered=True)
         
         if params:
