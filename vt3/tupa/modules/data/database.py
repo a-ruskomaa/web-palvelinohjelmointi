@@ -155,6 +155,8 @@ class MySQLDb(Database):
         cursor = cnx.cursor(dictionary=True, buffered=True)
         
         if params:
-            return cursor.execute(query, params)
+            cursor.execute(query, params)
         else:
-            return cursor.execute(query)
+            cursor.execute(query)
+            
+        return cursor
