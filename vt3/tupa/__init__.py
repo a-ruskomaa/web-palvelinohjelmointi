@@ -9,8 +9,7 @@ def create_app():
     app = Flask(__name__)
 
     # ladataan asetukset (mm. tietokannan osoite) tiedostosta
-    path_to_config = os.path.join('config', 'config.py')
-    logging.info(path_to_config)
+    path_to_config = os.path.join(os.getcwd(),'config', 'config.py')
     app.config.from_pyfile(path_to_config)
 
     # alustetaan tietokanta

@@ -25,15 +25,12 @@ class Database:
         """ Alustaa tietokannan. Valitsee käytetyn
         tietokantajärjestelmän suoritusympäsistön mukaan."""
 
-        # haetaan tietokannan polku asetuksista
-        db_path = app.config['DB_PATH']
-
         # tietokantayhteys katkaistaan automaattisesti käsitellyn HTTP-pyynnön jälkeen
         app.teardown_appcontext(self.sulje_yhteys)
 
         # valitaan tietokanta suoritusympäristön perusteella
         if app.env == 'development':
-            self.db = SqliteDb(db_path)
+            self.db = SqliteDb(app)
         else:
             self.db = MySQLDb(app)
 
@@ -98,8 +95,9 @@ class Database:
 
 class SqliteDb(Database):
 
-    def __init__(self, path:str):
-        self.path = path
+    def __init__(self, app):
+        # haetaan tietokannan polku asetuksista
+        self.path = app.config['DB_PATH']
 
 
     def avaa_yhteys(self):
@@ -128,10 +126,10 @@ class MySQLDb(Database):
 
     def __init__(self, app):
         self.config = {
-            "database": app.config['DB_NAME'],
-            "user": app.config['DB_USER'],
-            "passwd": app.config['DB_PW'],
-            "host": app.config['DB_HOST']
+            "database": app.config.get('DB_NAME'),
+            "user": app.config.get('DB_USER'),
+            "passwd": app.config.get('DB_PW'),
+            "host": app.config.get('DB_HOST')
         }
 
     def avaa_yhteys(self):
