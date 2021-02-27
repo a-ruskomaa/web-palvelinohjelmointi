@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, session, redirect
-from flask.globals import current_app
+from flask.globals import current_app, request
 from flask.helpers import url_for
 from tupa.modules.data.dataservice import hae_kilpailut, hae_joukkue_nimella
 from tupa.modules.helpers.errors import AuthenticationError
@@ -22,7 +22,10 @@ def login():
 
     # lisätään lomakkeelle kilpailut vaihtoehdoiksi
     loginform.kilpailu.choices = kilpailu_tuplet
-    loginform.kilpailu.data = kilpailu_tuplet[0][0]
+
+    # valitaan ensimmäinen vaihtoehto
+    if request.method == 'GET':
+        loginform.kilpailu.data = kilpailu_tuplet[0][0]
 
     loginerrors = []
 
