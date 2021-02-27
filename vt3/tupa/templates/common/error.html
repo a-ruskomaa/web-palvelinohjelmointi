@@ -1,0 +1,7 @@
+{% extends "layout.html" %}
+{% block title %}Virhe{% endblock %}
+{% block content %}
+<div class="large bold">{{message}}</div>
+<br>
+<a href="{{url_for('index')}}">Palaa etusivulle...</a>
+{% endblock %}

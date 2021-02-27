@@ -41,9 +41,8 @@ class Database:
         suoritetut tietokantakutsut suoritetaan samaa
         yhteyttä hyödyntäen. """
 
-        # jos pyynnön aikana ei ole vielä avattu yhteyttä, avataan nyt
+        # ensimmäinen tietokantakutsu avaa uuden yhteyden
         if 'db_conn' not in g:
-            print("DB connection opened")
             g.db_conn = self.db.avaa_yhteys()
 
         # palautetaan yhteys asiakkaan käyttöön
@@ -59,7 +58,6 @@ class Database:
         db_conn = g.pop('db_conn', None)
 
         if db_conn is not None:
-            print("DB connection closed")
             db_conn.close()
 
 
@@ -110,20 +108,21 @@ class Database:
 
 
 
-
-
 class SqliteDb(Database):
 
     def __init__(self, app):
         # haetaan tietokannan polku asetuksista
         self.path = app.config['DB_PATH']
 
+
     def _convert_query(self, query: str) -> str:
         """ Muuntaa sql-merkkijonon parametrit SQLiten ymmärtämään muotoon """
         return query.replace('%s', '?')
 
+
     def avaa_yhteys(self):
-        conn = sqlite3.connect(self.path, isolation_level=None)
+        """ Avaa yhteyden paikalliseen SQLite-tietokantaan """
+        conn = sqlite3.connect(self.path)
         conn.execute("PRAGMA foreign_keys = ON")
         conn.row_factory = sqlite3.Row
         self.conn = conn
@@ -134,19 +133,25 @@ class SqliteDb(Database):
         if self.conn is not None:
             self.conn.close()
 
+
     def tee_kutsu(self, con, query: str, params: dict = None) -> Cursor:
         """ Suorittaa tietokantaan halutun kutsun parametreilla tai ilman.
         Parametreja ei tarkisteta, vaan niiden on vastattava kutsua."""
-        
-        if params:
-            return con.execute(self._convert_query(query), params)
-        else:
-            return con.execute(self._convert_query(query))
+        try:
+            if params:
+                return con.execute(self._convert_query(query), params)
+            else:
+                return con.execute(self._convert_query(query))
+        except Exception as e:
+            print(f"***** DATABASE ERROR: *****")
+            print(e)
+            raise
+
 
 class MySQLDb(Database):
 
     def __init__(self, app):
-        print("******** INITIALIZING MYSQL ********")
+        """ Alustaa asetukset yhteyden ottamiseksi MySQL-tietokantaan """
         self.config = {
             "database": app.config.get('DB_NAME'),
             "user": app.config.get('DB_USER'),
@@ -154,18 +159,20 @@ class MySQLDb(Database):
             "host": app.config.get('DB_HOST')
         }
 
+
     def avaa_yhteys(self):
-        print("******** OPENING DB CONNECTION ********")
-        cnx = mysql.connector.connect(**self.config)
-        print(cnx.connection_id)
-        return cnx
+        """ Avaa yhteyden MySQL-tietokantaan """
+        self.cnx = mysql.connector.connect(**self.config)
+        return self.cnx
+
 
     def sulje_yhteys(self):
-        pass
+        """ Sulkee yhteyden MySQL-tietokantaan """
+        self.cnx.close()
+
 
     def tee_kutsu(self, cnx, query: str, params: dict = None) -> Cursor:
-        """ Suorittaa tietokantaan halutun kutsun parametreilla tai ilman.
-        Parametreja ei tarkisteta, vaan niiden on vastattava kutsua."""
+        """ Suorittaa tietokantaan halutun kutsun parametreilla tai ilman. """
 
         cursor = cnx.cursor(dictionary=True, buffered=True)
         

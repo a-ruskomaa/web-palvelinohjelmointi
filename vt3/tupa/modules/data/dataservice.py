@@ -1,42 +1,41 @@
 from sqlite3.dbapi2 import Row
 import ast
+from typing import Union
 from . import db
 
 # Moduli sisältää etukäteen muotoiltuja tietokantakutsuja. Valitettavasti en jaksanut näprätä näitä
 
 ######## KANTAKUTSUT ########
 
-def hae_kilpailu(kilpailu_id) -> dict:
+def hae_kilpailu(kilpailu_id) -> Union[dict, None]:
     sql = """SELECT nimi, id FROM kilpailut
             WHERE id = %s"""
-
     params = (kilpailu_id,)
-    rivi = db.hae_yksi(sql, params)
 
+    rivi = db.hae_yksi(sql, params)
     return dict(**rivi) if rivi else None
 
 
-def hae_kilpailut() -> dict:
+def hae_kilpailut() -> Union[dict, None]:
     sql = """SELECT nimi, id FROM kilpailut"""
 
     rivit = db.hae_monta(sql)
-    
     return _luo_dict_riveista(rivit)
 
 
-def hae_sarjat(kilpailu_id: int) -> dict:
+def hae_sarjat(kilpailu_id: int) -> Union[dict, None]:
     sql = """SELECT id AS sarja_id,
                     nimi AS sarja_nimi
             FROM sarjat
             WHERE sarjat.kilpailu = %s
             ORDER BY sarja_nimi ASC"""
-
     params = (kilpailu_id,)
+
     rivit = db.hae_monta(sql, params)
     return _luo_sarja_dict(rivit)
 
 
-def hae_sarjat_ja_joukkueet(kilpailu_id: int) -> dict:
+def hae_sarjat_ja_joukkueet(kilpailu_id: int) -> Union[dict, None]:
     sql = """
     SELECT sarjat.id AS sarja_id,
            sarjat.nimi AS sarja_nimi,
@@ -50,14 +49,13 @@ def hae_sarjat_ja_joukkueet(kilpailu_id: int) -> dict:
     ORDER BY
         sarja_nimi ASC,
         lower(joukkue_nimi) ASC"""
-
     params = (kilpailu_id,)
 
     rivit = db.hae_monta(sql, params)
     return _luo_sarja_dict(rivit)
 
 
-def hae_joukkueet(sarja_id: int) -> dict:
+def hae_joukkueet(sarja_id: int) -> Union[dict, None]:
     sql = """SELECT id AS joukkue_id,
                     nimi AS joukkue_nimi,
                     sarja AS joukkue_sarja,
@@ -66,61 +64,60 @@ def hae_joukkueet(sarja_id: int) -> dict:
             FROM joukkueet
             WHERE joukkueet.sarja = %s
             ORDER BY lower(joukkue_nimi) ASC"""
-
     params = (sarja_id,)
+
     rivit = db.hae_monta(sql, params)
 
-    joukkueet = {rivi['joukkue_id']:_luo_joukkue_dict(rivi) for rivi in rivit}
-
-    return joukkueet
+    return {rivi['joukkue_id']:_luo_joukkue_dict(rivi) for rivi in rivit}
 
 
-def hae_joukkue(joukkue_id):
-    sql = """SELECT id AS joukkue_id,
-                    nimi AS joukkue_nimi,
-                    sarja AS joukkue_sarja,
-                    salasana AS joukkue_salasana,
-                    jasenet AS joukkue_jasenet
+def hae_joukkue(joukkue_id) -> Union[dict, None]:
+    sql = """SELECT id,
+                    nimi,
+                    sarja,
+                    salasana,
+                    jasenet
             FROM joukkueet
             WHERE joukkueet.id = %s"""
-
     params = (joukkue_id,)
+
     rivi = db.hae_yksi(sql, params)
-    return _luo_joukkue_dict(rivi)
+    return dict(**rivi) if rivi else None
 
 
-
-def paivita_joukkue(joukkue: dict):
+def paivita_joukkue(joukkue: dict) -> int:
     sql = """UPDATE joukkueet SET
             nimi = %s,
             salasana = %s,
             sarja = %s,
             jasenet = %s
             WHERE id = %s"""
-
     params = (joukkue['nimi'], joukkue['salasana'], joukkue['sarja'], joukkue['jasenet'], joukkue['id'])
-    db.kirjoita(sql, params)
+
+    return db.kirjoita(sql, params)
 
 
-def lisaa_joukkue(joukkue: dict):
+def lisaa_joukkue(joukkue: dict) -> int:
     sql = """INSERT INTO joukkueet
             (nimi, sarja, jasenet) VALUES
             (%s, %s, %s)"""
-
     params = (joukkue['nimi'], joukkue['sarja'], joukkue['jasenet'])
+
+    # ei kommitoida tallennusta, sillä uudelle joukkueelle tulee lisätä salasana
+    # jonka tiivisteen laskemiseen tarvitaan tietokannan antama id
     return db.kirjoita(sql, params, commit=False)
 
 
-def poista_joukkue(joukkue_id: int):
+def poista_joukkue(joukkue_id: int) -> int:
     sql = """DELETE FROM joukkueet
             WHERE joukkueet.id = %s"""
-    
     params = (joukkue_id,)
+    
     return db.kirjoita(sql, params)
 
 
 
-def hae_joukkue_nimella(kilpailu_id: int, joukkue_nimi: str) -> dict:
+def hae_joukkue_nimella(kilpailu_id: int, joukkue_nimi: str) -> Union[dict, None]:
     sql = """SELECT joukkueet.id AS id,
                     joukkueet.nimi AS nimi,
                     joukkueet.salasana AS salasana,
@@ -132,14 +129,13 @@ def hae_joukkue_nimella(kilpailu_id: int, joukkue_nimi: str) -> dict:
             WHERE sarjat.kilpailu = %s
             AND trim(upper(joukkueet.nimi))
             = trim(upper(%s))"""
-            
     params = (kilpailu_id, joukkue_nimi)
 
     rivi = db.hae_yksi(sql, params)
     return dict(**rivi) if rivi else None
 
 
-def hae_kilpailun_rastit(kilpailu_id: int):
+def hae_kilpailun_rastit(kilpailu_id: int) -> Union[dict, None]:
     sql = """SELECT id, koodi, lat, lon FROM rastit
             WHERE rastit.kilpailu = %s"""
 
@@ -149,51 +145,47 @@ def hae_kilpailun_rastit(kilpailu_id: int):
     return _luo_taulukko_riveista(rivit)
 
 
-def hae_kilpailun_rastit_ja_leimaukset(kilpailu_id: int):
+def hae_kilpailun_rastit_ja_leimaukset(kilpailu_id: int) -> Union[dict, None]:
     sql = """SELECT id, koodi, lat, lon, Count(tupa.aika) AS leimauksia FROM rastit
             LEFT JOIN tupa ON
             tupa.rasti = rastit.id
             WHERE rastit.kilpailu = %s
             GROUP BY rastit.id
             ORDER BY rastit.koodi DESC"""
-
     params = (kilpailu_id,)
 
     rivit = db.hae_monta(sql, params)
     return _luo_taulukko_riveista(rivit)
 
 
-def hae_joukkueen_leimaukset(joukkue_id: int):
+def hae_joukkueen_leimaukset(joukkue_id: int) -> Union[dict, None]:
     sql = """SELECT aika, rasti, koodi, joukkue FROM tupa
             JOIN rastit ON
             tupa.rasti = rastit.id
             WHERE joukkue = %s"""
-    
     params = (joukkue_id,)
 
     rivit = db.hae_monta(sql, params)
     return _luo_taulukko_riveista(rivit)
 
 
-def paivita_leimaus(joukkue_id: int, uusi_aika: str, uusi_rasti_id: int, vanha_aika: str, vanha_rasti_id: int):
+def paivita_leimaus(joukkue_id: int, uusi_aika: str, uusi_rasti_id: int, vanha_aika: str, vanha_rasti_id: int) -> int:
     sql = """UPDATE tupa SET
             aika = %s,
             rasti = %s
             WHERE joukkue = %s
             AND aika = %s
             AND rasti = %s"""
-
     params = (uusi_aika, uusi_rasti_id, joukkue_id, vanha_aika, vanha_rasti_id)
 
     return db.kirjoita(sql, params)
 
 
-def poista_leimaus(joukkue_id: int, aika: str, rasti_id: int):
+def poista_leimaus(joukkue_id: int, aika: str, rasti_id: int) -> int:
     sql = """DELETE FROM tupa
             WHERE joukkue = %s
             AND aika = %s
             AND rasti = %s"""
-
     params = (joukkue_id, aika, rasti_id)
 
     return db.kirjoita(sql, params)
@@ -205,7 +197,7 @@ def poista_leimaus(joukkue_id: int, aika: str, rasti_id: int):
 # datan helpommin kásiteltävään muotoon
 
 def _luo_sarja_dict(rivit):
-    """ Luo monitasoisen dictionaryn haetuista sarjoista.
+    """ Luo monitasoisen hakemiston haetuista sarjoista.
 
     Jos annetut rivit sisältävät myös joukkueiden tiedot, lisätään
     joukkueet mukaan palautettavaan tietorakenteeseen.
@@ -245,7 +237,7 @@ def _luo_sarja_dict(rivit):
 
 
 def _luo_joukkue_dict(rivi: Row):
-    """ Luo dictionaryn joukkueen tiedoista.
+    """ Luo hakemiston joukkueen tiedoista.
     Salasanaa tai sarjaa ei ole pakko olla annetussa rivissä. """
 
     joukkue_id = rivi['joukkue_id']
@@ -264,7 +256,8 @@ def _luo_joukkue_dict(rivi: Row):
 
 
 def _luo_dict_riveista(rivit):
-    """ Muuntaa rivit automaattisesti pythonin dictionaryksi muodossa:
+    """ Muuntaa rivit automaattisesti pythonin hakemistoksi muodossa:
+
     {
         id1: {
             key1: value1,
@@ -279,6 +272,7 @@ def _luo_dict_riveista(rivit):
 
 def _luo_taulukko_riveista(rivit):
     """ Muuntaa rivit automaattisesti taulukoksi hakemistoja muodossa:
+
     [{
         key1: value1,
         key2: value2,

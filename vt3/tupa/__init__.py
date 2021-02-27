@@ -1,8 +1,8 @@
 import os
-import logging
-from flask import Flask, render_template, session
+from flask import Flask, render_template, session, redirect
 from flask.helpers import url_for
-from werkzeug.utils import redirect
+import mysql.connector
+import sqlite3
 
 
 def create_app():
@@ -21,6 +21,9 @@ def create_app():
     app.register_blueprint(admin.bp)
     app.register_blueprint(auth.bp)
     app.register_blueprint(joukkueet.bp)
+
+    app.register_error_handler(mysql.connector.Error, lambda e: render_template('common/error.html', message="Jotain meni pieleen..."))
+    app.register_error_handler(sqlite3.Error, lambda e: render_template('common/error.html', message="Jotain meni pieleen..."))
 
     @app.route('/', methods=["GET"])
     def index():

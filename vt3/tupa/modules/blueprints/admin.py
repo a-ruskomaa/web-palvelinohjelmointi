@@ -161,6 +161,9 @@ def muokkaa_joukkuetta():
     # haetaan valitun joukkueen tiedot ja leimaukset
     joukkue_dict = hae_joukkue(valittu_joukkue)
     leimaukset = hae_joukkueen_leimaukset(valittu_joukkue)
+
+    if not joukkue_dict:
+        return redirect(url_for('admin.listaa_joukkueet'))
         
     viesti = None
 
