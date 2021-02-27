@@ -65,7 +65,7 @@ class Database:
     def hae_monta(self, query: str, params: dict = None) -> List[Row]:
         """ Suorittaa tietokantaan monta riviä palauttavan haun. """
 
-        cur = self.db.tee_kutsu(query, params)
+        cur = self.tee_kutsu(query, params)
         vastaus = cur.fetchall()
         cur.close()
 
@@ -75,7 +75,7 @@ class Database:
     def hae_yksi(self, query: str, params: dict = None) -> Row:
         """ Suorittaa tietokantaan yhden rivin palauttavan haun. """
 
-        cur = self.db.tee_kutsu(query, params)
+        cur = self.tee_kutsu(query, params)
         vastaus = cur.fetchone()
         cur.close()
 
@@ -85,10 +85,17 @@ class Database:
     def kirjoita(self, query: str, params: dict = None) -> int:
         """ Suorittaa tietokantaan kirjoitusoperaation. """
 
-        cur = self.db.tee_kutsu(query, params)
+        cur = self.tee_kutsu(query, params)
         vastaus = cur.lastrowid
 
         return vastaus
+
+    def tee_kutsu(self, query: str, params: dict = None) -> Cursor:
+        """ Delegoi tietokantakutsun tietokantakohteiselle toteutukselle. """
+        con = self.avaa_yhteys()
+
+        return self.db.tee_kutsu(con, query, params)
+
 
 
 
@@ -112,10 +119,9 @@ class SqliteDb(Database):
         if self.conn is not None:
             self.conn.close()
 
-    def tee_kutsu(self, query: str, params: dict = None) -> Cursor:
+    def tee_kutsu(self, con, query: str, params: dict = None) -> Cursor:
         """ Suorittaa tietokantaan halutun kutsun parametreilla tai ilman.
         Parametreja ei tarkisteta, vaan niiden on vastattava kutsua."""
-        con = self.avaa_yhteys()
         
         if params:
             return con.execute(query, params)
@@ -136,16 +142,16 @@ class MySQLDb(Database):
     def avaa_yhteys(self):
         print("******** OPENING DB CONNECTION ********")
         cnx = mysql.connector.connect(**self.config)
+        print(cnx.connection_id)
         return cnx
 
     def sulje_yhteys(self):
         pass
 
-    def tee_kutsu(self, query: str, params: dict = None) -> Cursor:
+    def tee_kutsu(self, cnx, query: str, params: dict = None) -> Cursor:
         """ Suorittaa tietokantaan halutun kutsun parametreilla tai ilman.
         Parametreja ei tarkisteta, vaan niiden on vastattava kutsua."""
-        cnx = self.avaa_yhteys()
-        print("******** OPENING DB CONNECTION ********")
+
         cursor = cnx.cursor(dictionary=True, buffered=True)
         
         if params:
