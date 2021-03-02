@@ -23,9 +23,12 @@ def login():
     # lisätään lomakkeelle kilpailut vaihtoehdoiksi
     loginform.kilpailu.choices = kilpailu_tuplet
 
-    # valitaan ensimmäinen vaihtoehto
+    # jos ensimmäinen lataus, valitaan ensimmäinen vaihtoehto
     if request.method == 'GET':
         loginform.kilpailu.data = kilpailu_tuplet[0][0]
+    elif request.form.get('kilpailu'):
+        # muutoin valitaan edellinen valinta
+        loginform.kilpailu.data = int(request.form.get('kilpailu'))
 
     loginerrors = []
 
@@ -85,8 +88,10 @@ def admin_login():
             id = current_app.config['ADMIN_ID']
             pw_hash = current_app.config['ADMIN_PW_HASH']
 
-            # tarkistetaan annettu salasana, funktio heittää AuthenticationError:n jos salasana on väärä
+            # käyttäjätunnusta ei tarkisteta, kun sen osalta vaatimukset
+            # olivat vähän epämääräiset, eli pelkkä oikea salasana riittää
             tarkista_salasana(pw_hash, form.salasana.data, id)
+            # funktio heittää AuthenticationError:n jos salasana on väärä
 
             # tallennetaan käyttäjän tiedot sessioon
             session['kayttaja'] = {
