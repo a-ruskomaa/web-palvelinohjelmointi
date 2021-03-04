@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, session, redirect
 from flask.globals import request
 from flask.helpers import url_for
 from tupa.modules.domain.joukkue import Joukkue
-from tupa.modules.data.dataservice import hae_joukkue, hae_joukkueen_leimaukset, hae_kilpailu, hae_joukkue_nimella, hae_sarjat, hae_sarjat_ja_joukkueet, paivita_joukkue
+from tupa.modules.services.data.dataservice import hae_joukkue, hae_joukkueen_leimaukset, hae_kilpailu, hae_joukkue_nimella, hae_sarjat, hae_sarjat_ja_joukkueet, paivita_joukkue
 from tupa.modules.helpers.decorators import sallitut_roolit
 from tupa.modules.helpers.auth import hashaa_salasana
 from tupa.modules.helpers.forms import MuokkausForm

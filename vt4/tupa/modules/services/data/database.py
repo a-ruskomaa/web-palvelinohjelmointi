@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 import os
+import requests
 from typing import List, Union
 from flask import g
 from google.cloud.datastore.client import Client
@@ -32,47 +33,57 @@ class Database:
         # valitaan tietokanta suoritusympäristön perusteella
         if app.env == 'development':
             self.db = DevDatastore(app)
-            self.init_test_db()
+            self.init_test_db(self.db)
         else:
             self.db = ProdDatastore(app)
 
-    def init_test_db(self):
-        client = self.avaa_yhteys()
-        with open('data.json') as data:
+
+    def init_test_db(self, db):
+        emulator_path = os.getenv('DATASTORE_EMULATOR_HOST')
+        requests.post('http://' + emulator_path + '/reset')
+
+        client = db.avaa_yhteys()
+        with open(os.path.join(os.getcwd(), 'data', 'data.json')) as data:
             KILPAILUT = json.load(data)
 
-            entities = []
 
             for kilpailu in KILPAILUT:
+                child_entities = []
                 
                 parent_key = client.key("kilpailu")
                 parent_entity = Entity(parent_key)
 
                 for k, v in kilpailu.items():
-                    if k == 'sarjat':
-                        child_key = client.key("sarja", parent=parent_key)
-                        child_entity = Entity(child_key)
-
-                        child_entity.update(**v)
-
-                        entities.append(child_entity)
-                        continue
-                    elif k == 'rastit':
-                        child_key = client.key("rasti", parent=parent_key)
-                        child_entity = Entity(child_key)
-
-                        child_entity.update(**v)
-
-                        entities.append(child_entity)
+                    if k == 'sarjat' or k == 'rastit':
                         continue
                     elif k == 'alkuaika' or k == 'loppuaika':
                         v = datetime.fromisoformat(v)
                     parent_entity.update({k: v})
-                    entities.append(parent_entity)
+                
+                client.put(parent_entity)
 
-            client.put_multi(entities)
+                for sarja in kilpailu.get('sarjat'):
+                    child_key = client.key("sarja", parent=parent_entity.key)
+                    child_entity = Entity(child_key)
 
-    def avaa_yhteys(self):
+                    child_entity.update(**sarja)
+
+                    child_entities.append(child_entity)
+
+                for rasti in kilpailu.get('rastit'):
+                    child_key = client.key("rasti", parent=parent_entity.key)
+                    child_entity = Entity(child_key)
+
+                    child_entity.update(**rasti)
+
+                    child_entities.append(child_entity)
+
+                client.put_multi(child_entities)
+
+                print(parent_entity)
+
+
+    def avaa_yhteys(self) -> Client:
         """ Avaa tietokantayhteyden. Saman pyynnön aikana
         suoritetut tietokantakutsut suoritetaan samaa
         yhteyttä hyödyntäen. """
@@ -136,7 +147,7 @@ class Database:
             for k,v in params.items():
                 query.add_filter(k, '=', v)
 
-        return list(query)
+        return list(query.fetch())
 
 
     # def kirjoita(self, query: str, params: dict = None, commit: bool = True) -> int:
@@ -172,7 +183,7 @@ class DevDatastore(Database):
         os.environ["DATASTORE_PROJECT_ID"] = "emulated-project"
 
 
-    def avaa_yhteys(self):
+    def avaa_yhteys(self) -> Client:
         client = Client(
             project="emulated-project",
             namespace='ns_test',
@@ -206,7 +217,7 @@ class ProdDatastore(Database):
     def __init__(self, app):
         pass
 
-    def avaa_yhteys(self):
+    def avaa_yhteys(self) -> Client:
         client = Client()
         return client
 

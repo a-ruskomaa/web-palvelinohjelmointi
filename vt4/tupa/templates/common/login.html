@@ -11,27 +11,8 @@
 <span class="message error">{{error}}</span>
 {% endfor %}
 
-<form class="loginform" action="{{url_for('auth.admin_login') if role=='admin' else url_for('auth.login')}}" method="POST">
-    {{ loginform.csrf_token }}
-    <fieldset>
-        {% if role=='joukkue' %}
-        <div>
-            {% for subfield in loginform.kilpailu %}
-                    <div>{{ subfield }} {{ subfield.label }}</div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        <div>
-            <div class='bold'>{{ loginform.kayttaja.label }}</div>
-            <div>{{ loginform.kayttaja }}</div>
-        </div>
-        <div>
-            <div class='bold'>{{ loginform.salasana.label }}</div>
-            <div>{{ loginform.salasana }}</div>
-        </div>
-        <button type="submit">Kirjaudu</button>
-    </fieldset>
-</form>
+Welcome, {{user}}
+
 {% endblock %}
 
 {% block footer %}

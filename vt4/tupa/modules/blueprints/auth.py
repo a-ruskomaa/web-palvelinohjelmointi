@@ -1,127 +1,58 @@
-from flask import Blueprint, render_template, session, redirect
-from flask.globals import current_app, request
+import logging
+from flask import Blueprint, session, redirect
 from flask.helpers import url_for
-from tupa.modules.data.dataservice import hae_kilpailut, hae_joukkue_nimella
-from tupa.modules.helpers.errors import AuthenticationError
-from tupa.modules.helpers.auth import tarkista_salasana
-from tupa.modules.helpers.forms import UserLoginForm, AdminLoginForm
+from flask.templating import render_template
+from tupa.modules.services.auth import redirect_to_auth_login, parse_user_from_token
 
 bp = Blueprint('auth', __name__, url_prefix='')
 
-
-@bp.route('/joukkue/login', methods=['GET','POST'])
+# This will work as the login endpoint
+@bp.route('/login', methods=['GET'])
 def login():
-    """Reitti, jonka kautta joukkueet kirjautuvat sovellukseen"""
+    logging.debug("Login page requested.")
 
-    # luodaan kirjautumislomake
-    loginform = UserLoginForm()
+    # Generate the url where OAuth provider will send the auth token
+    callback_url = url_for('auth.login_callback', _external=True)
 
-    # haetaan kilpailut tietokannasta ja muokataan ne tupleiksi
-    kilpailut = hae_kilpailut() 
-    kilpailu_tuplet = [(kilpailu['id'], kilpailu['nimi']) for kilpailu in kilpailut.values()]
-
-    # lisätään lomakkeelle kilpailut vaihtoehdoiksi
-    loginform.kilpailu.choices = kilpailu_tuplet
-
-    # jos ensimmäinen lataus, valitaan ensimmäinen vaihtoehto
-    if request.method == 'GET':
-        loginform.kilpailu.data = kilpailu_tuplet[0][0]
-    elif request.form.get('kilpailu'):
-        # muutoin valitaan edellinen valinta
-        loginform.kilpailu.data = int(request.form.get('kilpailu'))
-
-    loginerrors = []
-
-    # tarkistetaan formi
-    if loginform.validate_on_submit():
-        kilpailu_id=loginform.kilpailu.data
-        joukkue_nimi=loginform.kayttaja.data
-
-        try:
-            # etsitään onko valitussa kilpailussa annetun nimistä joukkuetta
-            joukkue = hae_joukkue_nimella(kilpailu_id, joukkue_nimi)
-
-            if not joukkue:
-                raise AuthenticationError("Joukkuetta ei löytynyt")
-
-            # tarkistetaan annettu salasana, funktio heittää AuthenticationError:n jos salasana on väärä
-            tarkista_salasana(joukkue['salasana'], loginform.salasana.data, joukkue['id'])
-
-            # tallennetaan käyttäjän tiedot sessioon
-            session['kayttaja'] = {
-                'id': joukkue['id'],
-                'roolit': ['joukkue']
-            }
-
-            # tallennetaan sessioon tieto valinnoista, valittu joukkue = sisäänkirjautunut joukkue
-            session['valittu'] = {
-                'kilpailu': kilpailu_id,
-                'sarja': None,
-                'joukkue': joukkue['id']
-            }
-
-            # ohjataan sisäänkirjautumisen jälkeen joukkuelistaukseen
-            return redirect(url_for('joukkueet.listaa'))
-
-        except (AuthenticationError):
-            # näytetään käyttäjälle virheilmoitus jos joukkuetta ei löydy tai salasana on väärä
-            loginerrors.append('Kirjautuminen epäonnistui')
-        
-    # näytetään kirjautumissivu
-    return render_template('common/login.html', loginform=loginform, loginerrors=loginerrors, role='joukkue')
+    return redirect_to_auth_login(callback_url=callback_url)
 
 
-
-@bp.route('/admin/login', methods=['GET','POST'])
-def admin_login():
-    """Reitti, jonka kautta ylläpitäjät kirjautuvat sovellukseen"""
-
-    # luodaan kirjautumislomake
-    form = AdminLoginForm()
-
-    loginerrors = []
-
-    # tarkistetaan formi
-    if form.validate_on_submit():
-        try:
-            # haetaan hyväksytyt adminin tunnukset asetuksista
-            id = current_app.config['ADMIN_ID']
-            pw_hash = current_app.config['ADMIN_PW_HASH']
-
-            # käyttäjätunnusta ei tarkisteta, kun sen osalta vaatimukset
-            # olivat vähän epämääräiset, eli pelkkä oikea salasana riittää
-            tarkista_salasana(pw_hash, form.salasana.data, id)
-            # funktio heittää AuthenticationError:n jos salasana on väärä
-
-            # tallennetaan käyttäjän tiedot sessioon
-            session['kayttaja'] = {
-                'id': id,
-                'roolit': ['admin']
-            }
-
-            # tallennetaan sessioon tieto valinnoista
-            session['valittu'] = {
-                'kilpailu': None,
-                'sarja': None,
-                'joukkue': None
-            }
-
-            # ohjataan sisäänkirjautumisen jälkeen kilpailulistaukseen
-            return redirect(url_for('admin.listaa_kilpailut'))
-
-        except (AuthenticationError):
-            # näytetään käyttäjälle virheilmoitus jos joukkuetta ei löydy tai salasana on väärä
-            loginerrors.append('Kirjautuminen epäonnistui')
-    
-    # näytetään kirjautumissivu
-    return render_template('common/login.html', loginform=form, loginerrors=loginerrors, body_class="bg-lightblue", role='admin')
-
-
-@bp.route('/logout')
+# Logout endpoint
+@bp.route('/logout', methods=['GET'])
 def logout():
-    """ Reitti, jonka kautta käyttäjä kirjataan ulos """
+    logging.debug("Logout requested.")
 
-    # poistetaan sessiosta tiedot käyttäjästä ja valinnoista
-    session.pop('kayttaja', None)
-    session.pop('valittu', None)
-    return redirect('/')
+    # Removes the user from the session, effectively logging them out
+    session.pop('user')
+
+    return redirect(url_for('index'))
+
+
+# This will be used as the redirect address for OAuth
+@bp.route('/login-callback', methods=['GET'])
+def login_callback():
+    logging.debug("Received callback from OAuth server")
+    try:
+        # Parses the user id and roles from the response. Authlib
+        # grabs the token from the response context that does not have
+        # to be passed explicitly.
+        user = parse_user_from_token()
+        logging.info(f"Received token for: {user}")
+
+        # Stores the user information in the session context. This will cause
+        # flask to automatically return a session cookie that will be used to
+        # id the user during further requests.
+        session['user'] = user
+
+        # If the user has admin status, redirect them to admin page after login
+        # if 'admin' in user['roles']:
+        #     return redirect(url_for("joukkueet."))
+
+    except Exception as e:
+        logging.error(f"Exception during authentication:")
+        logging.error(e)
+
+    # return redirect(url_for('home'))
+    return render_template('common/login.html', user = session.get('user'))
+
+

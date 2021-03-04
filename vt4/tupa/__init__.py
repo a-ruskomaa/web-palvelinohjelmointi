@@ -11,8 +11,12 @@ def create_app():
     app.config.from_pyfile(path_to_config)
 
     # alustetaan tietokanta
-    from tupa.modules.data import db
+    from tupa.modules.services.data import db
     db.init_app(app)
+
+    # alustetaan autentikaatio
+    from tupa.modules.services.auth import init_auth
+    init_auth(app)
 
     # rekisteröidään reitit
     from tupa.modules.blueprints import admin, auth, joukkueet
@@ -21,8 +25,7 @@ def create_app():
     app.register_blueprint(joukkueet.bp)
 
     # näytetään virhesivu jos tietokantakutsu aiheuttaa virhetilanteen
-    app.register_error_handler(mysql.connector.Error, lambda: render_template('common/error.html', message="Jotain meni pieleen..."))
-    app.register_error_handler(sqlite3.Error, lambda: render_template('common/error.html', message="Jotain meni pieleen..."))
+    # app.register_error_handler(mysql.connector.Error, lambda: render_template('common/error.html', message="Jotain meni pieleen..."))
 
     @app.route('/', methods=["GET"])
     def index():
