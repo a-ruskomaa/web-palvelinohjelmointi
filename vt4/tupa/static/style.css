@@ -1,0 +1,165 @@
+body {
+  margin: 0;
+}
+
+#content,
+#footer {
+  margin: 1rem 0.5rem 0.5rem 0.5rem;
+}
+
+.bg-lightblue {
+  background-color: #BDDEFF;
+}
+
+.message {
+  font-size: large;
+  font-weight: bold;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.large {
+  font-size: large;
+}
+
+.error {
+  color: red;
+  margin: auto 0.5rem;
+}
+
+.info {
+  color: blue;
+}
+
+.right {
+  float: right;
+}
+
+.clear {
+  clear: both;
+}
+
+.topnav {
+  overflow: hidden;
+  background-color: #3395DD;
+}
+
+.topnav ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  /* overflow: hidden; */
+}
+
+.topnav li,
+.topnav p {
+  margin: 0;
+  float: left;
+  display: block;
+  font-size: large;
+  font-weight: bold;
+  text-align: center;
+  padding: 14px 16px;
+}
+
+.topnav li a {
+  color: white;
+  text-decoration: none;
+}
+
+.topnav li.right {
+  float: right;
+}
+
+@media screen and (max-width: 600px) {
+  .topnav li.right,
+  .topnav li {
+    float: none;
+    padding: 3px;
+  }
+}
+
+form {
+  /* margin: 0rem 0rem; */
+  background-color: white;
+}
+
+form fieldset {
+  margin: 0;
+}
+
+form fieldset > * {
+  margin-bottom: 0.5rem;
+}
+
+form label {
+  padding: 0.2rem;
+}
+
+form.joukkueform {
+  max-width: 30%;
+  min-width: fit-content;
+}
+
+form.leimausform {
+  max-width: 20%;
+  min-width: fit-content;
+}
+
+form.joukkueform li {
+  list-style-type: none;
+}
+
+form .input-container {
+  float: right;
+  clear: right;
+}
+form label {
+  clear: both;
+}
+
+form.loginform {
+  max-width: 20%;
+}
+
+#jasenet {
+  margin: 0 0 0 0.2rem;
+}
+
+#jasenet input {
+  margin: 0.1rem;
+}
+
+button {
+  background-color: #3395DD;
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  font-size: large;
+}
+
+form.joukkueform button, form.leimausform button {
+  background-color: white;
+  border: 2px solid #3395DD ;
+  border-radius: 10px;
+  color: #3395DD;
+}
+
+table,
+th,
+td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  min-width: 10rem;
+  text-align: center;
+}

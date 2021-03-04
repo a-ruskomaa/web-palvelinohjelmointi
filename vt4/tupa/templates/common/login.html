@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block title %}LOGIN{% endblock %}
+
+{% block nav %}
+<p>TULOSPALVELU</p>
+{% endblock %}
+
+{% block content %}
+<h1>Kirjaudu</h1>
+{% for error in loginerrors %}
+<span class="message error">{{error}}</span>
+{% endfor %}
+
+<form class="loginform" action="{{url_for('auth.admin_login') if role=='admin' else url_for('auth.login')}}" method="POST">
+    {{ loginform.csrf_token }}
+    <fieldset>
+        {% if role=='joukkue' %}
+        <div>
+            {% for subfield in loginform.kilpailu %}
+                    <div>{{ subfield }} {{ subfield.label }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div>
+            <div class='bold'>{{ loginform.kayttaja.label }}</div>
+            <div>{{ loginform.kayttaja }}</div>
+        </div>
+        <div>
+            <div class='bold'>{{ loginform.salasana.label }}</div>
+            <div>{{ loginform.salasana }}</div>
+        </div>
+        <button type="submit">Kirjaudu</button>
+    </fieldset>
+</form>
+{% endblock %}
+
+{% block footer %}
+
+{% if role=='joukkue' %}
+Kirjaudu ylläpitäjänä <a href="{{url_for('auth.admin_login')}}">täällä</a>.
+{% else %}
+Kirjaudu joukkueena <a href="{{url_for('auth.login')}}">täällä</a>.
+{% endif %}
+{% endblock %}

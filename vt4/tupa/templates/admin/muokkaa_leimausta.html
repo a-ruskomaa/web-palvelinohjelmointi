@@ -1,0 +1,39 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Muokkaa leimausta{% endblock %}
+{% block content %}
+
+<h1>Muokkaa leimausta</h1>
+<form class="leimausform" action="{{url_for('admin.muokkaa_leimausta')}}" method="POST">
+    {{ form.csrf_token }}
+    <fieldset>
+        <div>
+            {{ form.aika.label}}
+            {{form.aika}}
+
+            {% for error in form.aika.errors %}
+            <span class="error">{{ error|e }}</span>
+            {% endfor %}
+        </div>
+        <div>
+            {{ form.rasti.label}}
+            {{form.rasti}}
+
+            {% for error in form.rasti.errors %}
+            <span class="error">{{ error|e }}</span>
+            {% endfor %}
+        </div>
+        {{ form.vanha_aika }}
+        {{ form.vanha_rasti }}
+
+        <div>{{ form.poista.label }}{{ form.poista }}</div>
+        <button type="submit">Tallenna</button>
+    </fieldset>
+</form>
+
+<a href="{{url_for('admin.muokkaa_joukkuetta')}}">Takaisin joukkueen muokkaukseen</a>
+
+{{aika}}
+{{joukkue}}
+{{rasti}}
+
+{% endblock %}

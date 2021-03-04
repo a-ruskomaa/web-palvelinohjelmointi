@@ -1,0 +1,5 @@
+flask
+flask_wtf
+google-cloud-datastore
+google-cloud-logging
+authlib
