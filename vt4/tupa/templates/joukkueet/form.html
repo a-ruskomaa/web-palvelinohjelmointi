@@ -2,7 +2,11 @@
 {% block title %}Muokkaa{% endblock %}
 {% block content %}
 
+{% if mode=='lisaa' %}
+<h1>Lisää joukkue</h1>
+{% else %}
 <h1>Muokkaa joukkuetta</h1>
+{% endif %}
 {% include 'common/joukkueform.html' %}
 <a href="{{url_for('joukkueet.listaa')}}">Takaisin listaukseen</a>
 

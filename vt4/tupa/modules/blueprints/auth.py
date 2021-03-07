@@ -23,7 +23,7 @@ def logout():
     logging.debug("Logout requested.")
 
     # Removes the user from the session, effectively logging them out
-    session.pop('user')
+    session.pop('kayttaja', None)
 
     return redirect(url_for('index'))
 
@@ -37,12 +37,13 @@ def login_callback():
         # grabs the token from the response context that does not have
         # to be passed explicitly.
         user = parse_user_from_token()
+        user['roolit'] = ['perus']
         logging.info(f"Received token for: {user}")
 
         # Stores the user information in the session context. This will cause
         # flask to automatically return a session cookie that will be used to
         # id the user during further requests.
-        session['user'] = user
+        session['kayttaja'] = user
 
         # If the user has admin status, redirect them to admin page after login
         # if 'admin' in user['roles']:
@@ -52,7 +53,7 @@ def login_callback():
         logging.error(f"Exception during authentication:")
         logging.error(e)
 
-    # return redirect(url_for('home'))
+    return redirect(url_for('joukkueet.listaa'))
     return render_template('common/login.html', user = session.get('user'))
 
 

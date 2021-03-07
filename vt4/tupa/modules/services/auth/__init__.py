@@ -1,6 +1,7 @@
 import os
 from tupa.modules.helpers.errors import AuthenticationError
 from authlib.integrations.flask_client import OAuth
+from flask import session
 
 # Registers OAuth client with the application
 oauth_client = None
@@ -48,7 +49,9 @@ def parse_user_from_token():
         # id the user simply based on their email address 
         google_account = oauth_client.parse_id_token(token)
 
-        user = google_account.get('email')
+        user = {
+            'email': google_account.get('email')
+        }
 
         if not user:
             raise AuthenticationError(f"Account with email {google_account.get('email')} not found ")

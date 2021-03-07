@@ -108,7 +108,7 @@ class Database:
         #     db_conn.close()
 
 
-    def hae_yksi(self, kind: str, id: int = None, params: dict = None):
+    def hae_yksi(self, kind: str, id: int = None, params: dict = None) -> Entity:
         """ Suorittaa tietokantaan yhden rivin palauttavan haun. """
 
         client = self.avaa_yhteys()
@@ -132,7 +132,7 @@ class Database:
         return entity
 
 
-    def hae_monta(self, kind: str, ancestor: dict = None, params: dict = None) -> List:
+    def hae_monta(self, kind: str, ancestor: dict = None, params: dict = None) -> List[Entity]:
         """ Suorittaa tietokantaan monta riviä palauttavan haun. """
 
         client = self.avaa_yhteys()
@@ -150,17 +150,29 @@ class Database:
         return list(query.fetch())
 
 
-    # def kirjoita(self, query: str, params: dict = None, commit: bool = True) -> int:
-    #     """ Suorittaa tietokantaan kirjoitusoperaation. Kirjoitusoperaatiot 
-    #     kommitoidaan automaattisesti.
-        
-    #     Koska tietokantayhteys on HTTP-pyyntökohtainen, voidaan samaan transaktioon liittää
-    #     useita kirjoitusoperaatioita asettamalla parametriksi commit=False. Viimeisen operaation
-    #     tulee tällöin huolehtia transaktion kommitoinnista."""
+    def kirjoita(self, kind: str, obj: object, id: int = None, parent: dict = None) -> int:
+        """ Suorittaa tietokantaan kirjoitusoperaation. Kirjoitusoperaatiot 
+        kommitoidaan automaattisesti"""
 
-    #     cur = self.tee_kutsu(query, params, commit)
-    #     vastaus = cur.lastrowid
-    #     return vastaus
+        client = self.avaa_yhteys()
+
+        if parent:
+            parent_key = client.key(parent.get('kind'), parent.get('id'))
+            print(parent)
+            print(parent_key)
+            key = client.key(kind, parent=parent_key)
+        elif id:
+            key = client.key(kind, id)
+        else:
+            key = client.key(kind=kind)
+
+        entity = Entity(key)
+
+        entity.update(obj)
+
+        client.put(entity)
+
+        return entity.id
 
 
     # def tee_kutsu(self, query: str, params: dict = None, commit: bool = False) -> Union[Cursor,MySQLCursorBufferedDict]:

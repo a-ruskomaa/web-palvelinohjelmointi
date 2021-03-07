@@ -11,7 +11,6 @@ from tupa.modules.helpers.forms import LeimausForm, MuokkausForm, LisaysForm
 from tupa.modules.services.data.dataservice import (hae_joukkue_nimella, hae_joukkueen_leimaukset,
                                             hae_kilpailun_rastit,
                                             hae_kilpailut,
-                                            hae_sarjat,
                                             hae_joukkueet,
                                             hae_joukkue,
                                             paivita_joukkue,

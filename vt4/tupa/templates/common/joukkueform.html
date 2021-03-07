@@ -1,6 +1,20 @@
 <form class="joukkueform" action="{{action_url}}" method="POST">
   {{ form.csrf_token }}
   <fieldset>
+
+      
+    {% if mode=='lisaa' %}
+    <div class="clear">
+      {{form.kilpailu.label}}
+      <div class="input-container">
+        {% for subfield in form.kilpailu %}
+        <div>{{ subfield }} {{ subfield.label }}</div>
+        {% endfor %}
+      </div>
+    </div>
+    <button class="clear" type="submit"  formnovalidate='formnovalidate' formmethod="get" formaction="{{action_url}}">Valitse</button>
+    {% endif %}
+
     <div class="clear">
       {{ form.nimi.label }}
       <div class="input-container">{{ form.nimi }}</div>
@@ -8,7 +22,6 @@
       <span class="error right">{{ error|e }}</span> {% endfor %}
     </div>
 
-    {% if mode=='edit' %}
     <div class="clear">
       {{form.sarja.label}}
       <div class="input-container">
@@ -17,22 +30,7 @@
         {% endfor %}
       </div>
     </div>
-    {% endif %}
 
-    <div class="clear">
-      {{ form.salasana.label }}
-      <div class="input-container">{{ form.salasana }}</div>
-      {% for error in form.salasana.errors %}
-      <span class="error right">{{ error|e }}</span>
-      {% endfor %}
-    </div>
-    <div class="clear">
-      {{ form.salasana2.label }}
-      <div class="input-container">{{ form.salasana2 }}</div>
-      {% for error in form.salasana2.errors %}
-      <span class="error right">{{ error|e }}</span>
-      {% endfor %}
-    </div>
 
     <div class="clear">
       {{ form.jasenet.label }} {% if form.jasenet.errors|length %}

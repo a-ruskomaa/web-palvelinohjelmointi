@@ -34,11 +34,9 @@ def create_app():
 
         # ohjataan kirjautunut käyttäjä roolin mukaiselle aloitussivulle ja
         # kirjautumaton käyttäjä kirjautumissivulle
-        if kayttaja and 'joukkue' in kayttaja['roolit']:
+        if kayttaja:
             return redirect(url_for('joukkueet.listaa'))
-        elif kayttaja and 'admin' in kayttaja['roolit']:
-            return redirect(url_for('admin.index'))
         else:
-            return redirect(url_for('auth.login'))
+            return render_template('common/index.html')
             
     return app

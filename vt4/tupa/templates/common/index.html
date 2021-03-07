@@ -11,15 +11,10 @@
 <span class="message error">{{error}}</span>
 {% endfor %}
 
-Welcome, {{user}}
-
+<form action="{{url_for('auth.login')}}" method="GET">
+    <input type="image" name="login" src="{{url_for('static', filename='btn_google_signin_dark_normal_web@2x.png')}}" alt="Login with google">
+</form>
 {% endblock %}
 
 {% block footer %}
-
-{% if role=='joukkue' %}
-Kirjaudu ylläpitäjänä <a href="{{url_for('auth.admin_login')}}">täällä</a>.
-{% else %}
-Kirjaudu joukkueena <a href="{{url_for('auth.login')}}">täällä</a>.
-{% endif %}
 {% endblock %}
