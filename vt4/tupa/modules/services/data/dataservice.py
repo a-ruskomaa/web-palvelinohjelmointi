@@ -1,6 +1,8 @@
 from sqlite3.dbapi2 import Row
 import ast
-from typing import Union
+from typing import List, Union
+
+from google.cloud.datastore.entity import Entity
 from . import db
 
 # Moduli sisältää etukäteen muotoiltuja tietokantakutsuja. Valitettavasti en jaksanut näprätä näitä
@@ -10,79 +12,109 @@ from . import db
 
 ######## KILPAILU ########
 
-def hae_kilpailu(kilpailu_id) -> Union[dict, None]:
+def hae_kilpailu(kilpailu_id) -> Union[Entity, None]:
+    print("Haetaan kilpailu")
+    if not kilpailu_id:
+        return None
     res = db.hae_yksi(kind='kilpailu', id=kilpailu_id)
     return res
 
 
-def hae_kilpailut() -> Union[list, None]:
+def hae_kilpailut() -> Union[List[Entity], None]:
     res = db.hae_monta(kind='kilpailu')
     return res
-    return _luo_dict_riveista(res)
 
 
 ######## SARJA ########
 
 
-def hae_sarja(sarja_id) -> Union[dict, None]:
-    res = db.hae_yksi(kind='sarja', id=sarja_id)
+def hae_sarja(sarja_id, kilpailu_id) -> Union[Entity, None]:
+    ancestors = None
+    print("Haetaan sarja")
+    if not (sarja_id and kilpailu_id):
+        return None
+    ancestors = {
+        'kilpailu': kilpailu_id
+    }
+    res = db.hae_yksi(kind='sarja', id=sarja_id, ancestors=ancestors)
     return res
 
 
 def hae_sarjat(kilpailu_id: int = None) -> Union[dict, None]:
+    ancestors = None
+    
     if kilpailu_id:
-        ancestor = {
-            'kind': 'kilpailu',
-            'id': kilpailu_id
+        ancestors = {
+            'kilpailu': kilpailu_id
         }
-        res = db.hae_monta(kind='sarja', ancestor=ancestor)
-    else:
-        res = db.hae_monta(kind='sarja')
+    
+    res = db.hae_monta(kind='sarja', ancestors=ancestors)
+
     return res
-    return _luo_dict_riveista(res)
 
 
 ######## JOUKKUE ########
 
 
-def hae_joukkue(joukkue_id: int = None, params: dict = None) -> Union[dict, None]:
-    return db.hae_yksi(kind='joukkue', id=joukkue_id, params=params)
-
-
-def hae_joukkueet(sarja_id: int = None) -> Union[dict, None]:
-    if sarja_id:
-        ancestor = {
-            'kind': 'sarja',
-            'id': sarja_id
+def hae_joukkue(joukkue_id: int = None, sarja_id: int = None, kilpailu_id: int = None, filters: dict = None) -> Union[Entity, None]:
+    ancestors = None
+    print("Haetaan joukkue")
+    if not (joukkue_id or filters):
+        # TODO heitä poikkeus?
+        return None
+    if sarja_id and kilpailu_id:
+        ancestors = {
+            'kilpailu': kilpailu_id,
+            'sarja': sarja_id
         }
-        res = db.hae_monta(kind='joukkue', ancestor=ancestor)
-    else:
-        res = db.hae_monta(kind='joukkue')
+    return db.hae_yksi(kind='joukkue', id=joukkue_id, ancestors=ancestors, filters=filters)
+
+
+def hae_joukkueet(sarja_id: int = None, kilpailu_id: int = None, filters: dict = None) -> Union[dict, None]:
+    ancestors = None
+    if kilpailu_id:
+        ancestors = {
+            'kilpailu': kilpailu_id
+        }
+        if sarja_id:
+            ancestors.update({'sarja': sarja_id})
+
+    res = db.hae_monta(kind='joukkue', ancestors=ancestors, filters=filters)
 
     return res
-    return _luo_dict_riveista(res)
 
 
 
-def paivita_joukkue(joukkue: dict) -> int:
-    res = db.kirjoita(kind='joukkue', obj=joukkue)
-    return res
-
-
-def lisaa_joukkue(joukkue: dict, parent_id: int) -> int:
-    parent = {
-        'kind': 'sarja',
-        'id': parent_id
+def paivita_joukkue(joukkue: dict, joukkue_id: int, sarja_id: int, kilpailu_id: int) -> int:
+    ancestors = {
+        'kilpailu': kilpailu_id,
+        'sarja': sarja_id
     }
-    res = db.kirjoita(kind='joukkue', obj=joukkue, parent=parent)
+    res = db.kirjoita(kind='joukkue', id=joukkue_id, obj=joukkue, ancestors=ancestors)
     return res
 
 
-def poista_joukkue(joukkue_id: int) -> int:
+def lisaa_joukkue(joukkue: dict, sarja_id: int, kilpailu_id: int) -> int:
+    ancestors = {
+        'kilpailu': kilpailu_id,
+        'sarja': sarja_id
+    }
+    res = db.kirjoita(kind='joukkue', obj=joukkue, ancestors=ancestors)
+    return res
+
+
+def poista_joukkue(joukkue_id: int, sarja_id: int, kilpailu_id: int) -> int:
+
+    ancestors = {
+        'kilpailu': kilpailu_id,
+        'sarja': sarja_id
+    }
+    
+    db.poista(kind='joukkue', id=joukkue_id, ancestors=ancestors)
     pass
 
 
-def hae_joukkue_nimella(kilpailu_id: int, joukkue_nimi: str) -> Union[dict, None]:
+def hae_joukkue_nimella(kilpailu_id: int, joukkue_nimi: str) -> Union[Entity, None]:
     pass
 
 

@@ -2,7 +2,13 @@
 {% block title %}Joukkue{% endblock %}
 
 {% block nav %}
-{% include 'common/nav_fragment.html' %}
+{% include 'fragments/topnav.html' %}
 {% endblock %}
 
-{% block footer %}{% endblock %}
+{% block footer %}
+{% if 'admin' in roles %}
+<a href="{{url_for('auth.admin_logout')}}">Poistu ylläpitotilasta</a></p>
+{% else %}
+<a href="{{url_for('auth.admin_login')}}">Kirjaudu ylläpitäjänä</a></p>
+{% endif %}
+{% endblock %}

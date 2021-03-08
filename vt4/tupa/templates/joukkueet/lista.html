@@ -4,14 +4,18 @@
 
 <h1>Kilpailun sarjat ja joukkueet:</h1>
 <ul>
-    {% for kilpailu in kilpailut.values() %}
+    {% for kilpailu_id, kilpailu in kilpailut.items() %}
     <li class='bold large'>{{kilpailu['nimi']}}</li>
         <ul>
-            {% for sarja in kilpailu['sarjat'].values() %}
+            {% for sarja_id, sarja in kilpailu['sarjat'].items() %}
             <li class='bold large'>{{sarja['nimi']}}</li>
                 <ul>
-                {% for joukkue in sarja['joukkueet'].values() %}
+                {% for joukkue_id, joukkue in sarja['joukkueet'].items() %}
+                    {% if joukkue['saa_muokata'] %}
+                    <li class='large'><a href="{{url_for('joukkueet.muokkaa', id=joukkue_id, sarja=sarja_id, kilpailu=kilpailu_id)}}">{{joukkue['nimi']}}</a></li>
+                    {% else %}
                     <li class='large'>{{joukkue['nimi']}}</li>
+                    {% endif %}
                         <ul>
                             {% for jasen in joukkue['jasenet'] %}
                             <li>{{jasen}}</li>

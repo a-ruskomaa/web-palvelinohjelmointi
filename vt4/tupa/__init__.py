@@ -19,10 +19,12 @@ def create_app():
     init_auth(app)
 
     # rekisteröidään reitit
-    from tupa.modules.blueprints import admin, auth, joukkueet
+    from tupa.modules.blueprints import admin, auth, joukkueet, rastit, leimaukset
     app.register_blueprint(admin.bp)
     app.register_blueprint(auth.bp)
     app.register_blueprint(joukkueet.bp)
+    app.register_blueprint(rastit.bp)
+    app.register_blueprint(leimaukset.bp)
 
     # näytetään virhesivu jos tietokantakutsu aiheuttaa virhetilanteen
     # app.register_error_handler(mysql.connector.Error, lambda: render_template('common/error.html', message="Jotain meni pieleen..."))
@@ -32,11 +34,11 @@ def create_app():
         # haetaan käyttäjän tiedot sessiosta
         kayttaja = session.get('kayttaja', None)
 
-        # ohjataan kirjautunut käyttäjä roolin mukaiselle aloitussivulle ja
+        # ohjataan kirjautunut käyttäjä aloitussivulle ja
         # kirjautumaton käyttäjä kirjautumissivulle
         if kayttaja:
             return redirect(url_for('joukkueet.listaa'))
         else:
-            return render_template('common/index.html')
+            return render_template('index.html')
             
     return app

@@ -108,19 +108,18 @@ class Database:
         #     db_conn.close()
 
 
-    def hae_yksi(self, kind: str, id: int = None, params: dict = None) -> Entity:
+    def hae_yksi(self, kind: str, id: int = None, ancestors: dict = None, filters: dict = None) -> Entity:
         """ Suorittaa tietokantaan yhden rivin palauttavan haun. """
 
         client = self.avaa_yhteys()
-
         if id:
-            entity_key = client.key(kind, id)
+            key = self._rakenna_avain(client, kind, ancestors, id)
+            entity = client.get(key)
 
-            entity = client.get(entity_key)
-
-        elif params:
+        elif filters:
+            print(f"Haetaan {kind} parametreilla:lla: {filters}")
             query = client.query(kind=kind)
-            for k,v in params.items():
+            for k,v in filters.items():
                 query.add_filter(k, '=', v)
 
             # pakataan vastaus iteraattoriin
@@ -129,50 +128,86 @@ class Database:
             # palautetaan ensimmäinen osuma tai None
             entity = next(query_iter, None)
 
-        return entity
+        print(entity)
+
+        return entity if entity else None
 
 
-    def hae_monta(self, kind: str, ancestor: dict = None, params: dict = None) -> List[Entity]:
+    def hae_monta(self, kind: str, ancestors: dict = None, filters: dict = None) -> List[Entity]:
         """ Suorittaa tietokantaan monta riviä palauttavan haun. """
 
         client = self.avaa_yhteys()
 
-        if ancestor:
-            ancestor_key = client.key(ancestor.get('kind'), ancestor.get('id'))
+        if ancestors:
+            args = []
+            for anc_kind, anc_id in ancestors.items():
+                args.append(anc_kind)
+                args.append(anc_id)
+
+            ancestor_key = client.key(*args)
             query = client.query(kind=kind, ancestor=ancestor_key)
         else:
             query = client.query(kind=kind)
 
-        if params:
-            for k,v in params.items():
+        if filters:
+            for k,v in filters.items():
                 query.add_filter(k, '=', v)
 
         return list(query.fetch())
 
 
-    def kirjoita(self, kind: str, obj: object, id: int = None, parent: dict = None) -> int:
+    def kirjoita(self, kind: str, obj: object, id: int = None, ancestors: dict = None) -> int:
         """ Suorittaa tietokantaan kirjoitusoperaation. Kirjoitusoperaatiot 
         kommitoidaan automaattisesti"""
 
         client = self.avaa_yhteys()
 
-        if parent:
-            parent_key = client.key(parent.get('kind'), parent.get('id'))
-            print(parent)
-            print(parent_key)
-            key = client.key(kind, parent=parent_key)
-        elif id:
-            key = client.key(kind, id)
-        else:
-            key = client.key(kind=kind)
+        print(f"Lisätään {kind}...")
 
-        entity = Entity(key)
+        key = self._rakenna_avain(client, kind, ancestors, id)
+
+        print(f"Avain: {key}")
+
+        if id:
+            entity = client.get(key)
+        else:
+            entity = Entity(key)
 
         entity.update(obj)
 
         client.put(entity)
 
+        print(entity)
+
         return entity.id
+
+
+    def poista(self, kind: str, id: int, ancestors: dict = None, ):
+
+        client = self.avaa_yhteys()
+
+        print(f"Poistetaan {kind}...")
+
+        key = self._rakenna_avain(client, kind, ancestors, id)
+
+        client.delete(key)
+
+
+    def _rakenna_avain(self, client: Client, kind: str, ancestors: dict = None, id: int = None):
+        print(id, kind, ancestors)
+        key_path = []
+        
+        # yleisin ensin
+        if ancestors:
+            for anc_kind, anc_id in ancestors.items():
+                key_path.append(anc_kind)
+                key_path.append(anc_id)
+
+        key_path.append(kind)
+        if id:
+            key_path.append(id)
+        
+        return client.key(*key_path)
 
 
     # def tee_kutsu(self, query: str, params: dict = None, commit: bool = False) -> Union[Cursor,MySQLCursorBufferedDict]:

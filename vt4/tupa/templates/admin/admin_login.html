@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block title %}LOGIN{% endblock %}
+
+{% block nav %}
+{% include 'fragments/topnav.html' %}
+{% endblock %}
+
+{% block content %}
+<h1>Kirjaudu ylläpitäjänä</h1>
+{% for error in loginerrors %}
+<span class="message error">{{error}}</span>
+{% endfor %}
+
+<form class="loginform" action="{{url_for('auth.admin_login')}}" method="POST">
+    {{ form.csrf_token }}
+    <fieldset>
+        <div>
+            <h3>Valitse kilpailu:</h3>
+            {% for subfield in form.kilpailu %}
+                    <div>{{ subfield }} {{ subfield.label }}</div>
+            {% endfor %}
+        </div>
+
+        <div>
+            <div class='bold'>{{ form.salasana.label }}</div>
+            <div>{{ form.salasana }}</div>
+        </div>
+        <button type="submit">Kirjaudu</button>
+    </fieldset>
+</form>
+{% endblock %}
+
+{% block footer %}<a href="{{url_for('joukkueet.listaa')}}">Palaa</a>{% endblock %}

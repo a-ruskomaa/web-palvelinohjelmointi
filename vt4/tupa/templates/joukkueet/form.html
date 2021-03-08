@@ -7,7 +7,7 @@
 {% else %}
 <h1>Muokkaa joukkuetta</h1>
 {% endif %}
-{% include 'common/joukkueform.html' %}
+{% include 'fragments/joukkueform.html' %}
 <a href="{{url_for('joukkueet.listaa')}}">Takaisin listaukseen</a>
 
 {% endblock %}

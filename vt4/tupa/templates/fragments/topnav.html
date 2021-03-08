@@ -1,0 +1,13 @@
+<ul>
+    {% if 'admin' in roles %}
+    <li >ADMIN</li>
+    {% endif %}
+    <li ><a href="{{url_for('joukkueet.listaa')}}">Kilpailut</a></li>
+    <li ><a href="{{url_for('joukkueet.lisaa')}}">Lisää joukkue</a></li>
+    {% if 'admin' in roles %}
+    <li ><a href="{{url_for('rastit.lisaa')}}">Lisää rasti</a></li>
+    <li ><a href="{{url_for('leimaukset.lisaa')}}">Lisää leimaus</a></li>
+    <li >ADMIN</li>
+    {% endif %}
+    <li class='right'><a href="{{url_for('auth.logout')}}">Kirjaudu ulos</a> </li>
+</ul>

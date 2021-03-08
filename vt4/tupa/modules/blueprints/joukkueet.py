@@ -1,9 +1,9 @@
+from collections import namedtuple
 import pprint
 from flask import Blueprint, render_template, session, redirect
 from flask.globals import request
 from flask.helpers import url_for
-from tupa.modules.domain.joukkue import Joukkue
-from tupa.modules.services.data.dataservice import hae_joukkue, hae_joukkueet, hae_sarjat, hae_kilpailut, lisaa_joukkue, paivita_joukkue
+from tupa.modules.services.data.dataservice import hae_joukkue, hae_joukkueet, hae_kilpailu, hae_sarjat, hae_kilpailut, lisaa_joukkue, paivita_joukkue, poista_joukkue
 from tupa.modules.helpers.decorators import sallitut_roolit
 from tupa.modules.helpers.forms import LisaysForm, MuokkausForm
 
@@ -19,16 +19,21 @@ def listaa():
     """ Reitti, jonka kautta listataan kaikki valitun kilpailun sarjat ja joukkueet """
 
     kilpailut = _hae_kaikki_tiedot()
+    kayttaja = session.get('kayttaja')
+    print(kayttaja)
 
     valittu = {
         'kilpailu': None,
+        'sarja': None,
         'joukkue': None
     }
 
     session['valittu'] = valittu
 
     # näytetään listaussivu
-    return render_template('joukkueet/lista.html', kilpailut=kilpailut)
+    return render_template('joukkueet/lista.html',
+                            kilpailut=kilpailut,
+                            roles=kayttaja['roolit'])
 
 
 
@@ -54,13 +59,15 @@ def lisaa():
     arr_sarjat = [(id, sarja['nimi']) for id, sarja in kilpailut[form.kilpailu.data]['sarjat'].items()]
     form.sarja.choices = arr_sarjat
 
-    if not form.sarja.data or form.sarja.data not in kilpailut[form.kilpailu.data]['sarjat'].keys():
-        form.sarja.data = arr_sarjat[0][0] if len(arr_sarjat) > 0 else None
+    if request.method == 'GET':
+        if not form.sarja.data or form.sarja.data not in kilpailut[form.kilpailu.data]['sarjat'].keys():
+            form.sarja.data = arr_sarjat[0][0] if len(arr_sarjat) > 0 else None
 
 
     # tarkistetaan lomake
     if form.validate_on_submit():
         kilpailu_id = int(form.kilpailu.data)
+        sarja_id = int(form.sarja.data)
 
         toinen = False
 
@@ -77,11 +84,11 @@ def lisaa():
                 'nimi': form.nimi.data,
                 # poistetaan tyhjät jäsenkentät
                 'jasenet': [_field.data for _field in form.jasenet if _field.data != ""],
-                'omistaja': kayttaja.get('email')
+                'lisaaja': kayttaja.get('email')
             }
 
             # päivitetään joukkueen tiedot kantaan ja uudelleenohjataan takaisin joukkuelistaukseen
-            lisaa_joukkue(joukkue, parent_id=int(form.sarja.data))
+            lisaa_joukkue(joukkue, sarja_id, kilpailu_id)
             return redirect(url_for('joukkueet.listaa'))
 
     # näytetään joukkueen muokkaussivu
@@ -89,7 +96,7 @@ def lisaa():
     return render_template('joukkueet/form.html',
                             form=form,
                             mode='lisaa',
-                            role='perus',
+                            roles=kayttaja['roolit'],
                             action_url=url_for('joukkueet.lisaa'))
 
 
@@ -100,54 +107,71 @@ def muokkaa():
     """ Valitun joukkueen tietojen muokkaukseen käytettävä sivu """
 
     kayttaja = session.get('kayttaja')
-    kilpailut = _hae_kaikki_tiedot()
+    valittu_kilpailu = session.get('kilpailu')
 
+    joukkue_id = request.args.get('id', request.form.get('id', type=int), type=int)
+    print(joukkue_id)
+    vanha_sarja_id = request.args.get('sarja', request.form.get('vanha_sarja', type=int), type=int)
+    print(vanha_sarja_id)
+    kilpailu_id = request.args.get('kilpailu', request.form.get('kilpailu', type=int), type=int)
+    print(kilpailu_id)
+
+    joukkue = hae_joukkue(joukkue_id, vanha_sarja_id, kilpailu_id)
+    kilpailu = hae_kilpailu(kilpailu_id)
+
+    if not (joukkue and kilpailu):
+        return render_template('error.html', message="Virheellinen tunniste")
+
+    if (kayttaja['email'] != joukkue['lisaaja'] and
+        not ('admin' in kayttaja['roolit'] and kilpailu_id == int(valittu_kilpailu))):
+        print(f"kayttaja: {kayttaja}, lisaaja: {joukkue['lisaaja']}")
+        print(kilpailu_id, int(valittu_kilpailu))
+        return redirect(url_for('joukkueet.listaa'))
 
     if request.method == 'GET':
-        joukkue_id = request.args.get('id')
-        if joukkue_id:
-            joukkue = hae_joukkue(joukkue_id=joukkue_id)
-        form = MuokkausForm(obj=joukkue)
+            Joukkue = namedtuple('Joukkue', ['id', 'vanha_sarja', 'sarja', 'kilpailu', 'nimi', 'jasenet'])
+            joukkue_obj = Joukkue(joukkue_id, vanha_sarja_id, vanha_sarja_id, kilpailu_id, joukkue['nimi'], joukkue['jasenet'])
+            print(joukkue_obj)
+            form = MuokkausForm(obj=joukkue_obj)
     else:
         form = MuokkausForm()
-
-    arr_kilpailut = [(id, kilpailu['nimi']) for id, kilpailu in kilpailut.items()]
-    form.kilpailu.choices = arr_kilpailut
-
-    if not form.kilpailu.data:
-        form.kilpailu.data = arr_kilpailut[0][0]
     
-    arr_sarjat = [(id, sarja['nimi']) for id, sarja in kilpailut[form.kilpailu.data]['sarjat'].items()]
+    arr_sarjat = [(sarja.key.id, sarja['nimi']) for sarja in hae_sarjat(kilpailu_id)]
     form.sarja.choices = arr_sarjat
 
-    if not form.sarja.data or form.sarja.data not in kilpailut[form.kilpailu.data]['sarjat'].keys():
-        form.sarja.data = arr_sarjat[0][0] if len(arr_sarjat) > 0 else None
+    if not form.sarja.data:
+        form.sarja.data = arr_sarjat[0][0]
 
 
     # tarkistetaan lomake
     if form.validate_on_submit():
-        kilpailu_id = int(form.kilpailu.data)
 
-        toinen = False
+        if form.poista.data:
+            poista_joukkue(joukkue_id, vanha_sarja_id, kilpailu_id)
+            return redirect(url_for('joukkueet.listaa'))
 
-        for sarja in kilpailut[kilpailu_id]['sarjat'].values():
-            for joukkue in sarja['joukkueet'].values():
-                if joukkue['nimi'] == form.nimi.data:
-                    toinen = True
 
-        if toinen:
+        saman_nimiset = hae_joukkueet(sarja_id=joukkue.key.parent.id, filters={'nimi': form.nimi.data})
+
+        if form.nimi.data in [joukkue['nimi'] for joukkue in saman_nimiset if int(joukkue.key.id) != int(joukkue_id)]:
             form.nimi.errors.append("Joukkue on jo olemassa!")
         else:
             # koostetaan lomakkeen tiedot dictionaryyn
-            joukkue = {
+            joukkue_dict = {
                 'nimi': form.nimi.data,
                 # poistetaan tyhjät jäsenkentät
-                'jasenet': [_field.data for _field in form.jasenet if _field.data != ""],
-                'omistaja': kayttaja.get('email')
+                'jasenet': [_field.data for _field in form.jasenet if _field.data != ""]
             }
 
+            sarja_id = form.sarja.data
             # päivitetään joukkueen tiedot kantaan ja uudelleenohjataan takaisin joukkuelistaukseen
-            paivita_joukkue(joukkue, parent_id=int(form.sarja.data))
+            if vanha_sarja_id == sarja_id:
+                paivita_joukkue(joukkue_dict, joukkue_id, vanha_sarja_id, kilpailu_id)
+            else:
+                poista_joukkue(joukkue_id, vanha_sarja_id, kilpailu_id)
+                joukkue_dict['lisaaja'] = joukkue['lisaaja']
+                lisaa_joukkue(joukkue_dict, sarja_id, kilpailu_id)
+            
             return redirect(url_for('joukkueet.listaa'))
 
     # näytetään joukkueen muokkaussivu
@@ -155,7 +179,7 @@ def muokkaa():
     return render_template('joukkueet/form.html',
                             form=form,
                             mode='muokkaa',
-                            role='perus',
+                            roles=kayttaja['roolit'],
                             action_url=url_for('joukkueet.muokkaa'))
 
 
@@ -166,16 +190,18 @@ def _hae_kaikki_tiedot() -> dict:
     joukkueet = hae_joukkueet()
 
     kayttaja = session.get('kayttaja')
-    for joukkue in joukkueet:
-        if 'admin' in kayttaja['roolit'] or joukkue['omistaja'] == kayttaja['email']:
-            joukkue['saa_muokata'] = True
+    valittu_kilpailu = session.get('kilpailu')
 
     dict_kilpailut = {kilpailu.id:{key:kilpailu[key] for key in kilpailu.keys()} for kilpailu in kilpailut}
 
-    for id, kilpailu in dict_kilpailut.items():
-        kilpailu['sarjat'] = {sarja.id:{key:sarja[key] for key in sarja.keys()} for sarja in sarjat if sarja.key.parent.id == id}
+    for kilpailu_id, kilpailu in dict_kilpailut.items():
+        kilpailu['sarjat'] = {sarja.id:{key:sarja[key] for key in sarja.keys()} for sarja in sarjat if sarja.key.parent.id == kilpailu_id}
 
-        for id, sarja in kilpailu['sarjat'].items():
-            sarja['joukkueet'] = {joukkue.id:{key:joukkue[key] for key in joukkue.keys()} for joukkue in joukkueet if joukkue.key.parent.id == id}
+        print(kilpailu['sarjat'])
+        for sarja_id, sarja in kilpailu['sarjat'].items():
+            sarja['joukkueet'] = {joukkue.id:{key:joukkue[key] for key in joukkue.keys()} for joukkue in joukkueet if joukkue.key.parent.id == sarja_id}
+            for joukkue in sarja['joukkueet'].values():
+                joukkue['saa_muokata'] = ('admin' in kayttaja['roolit'] and kilpailu_id == valittu_kilpailu
+                                        or joukkue['lisaaja'] == kayttaja['email'])
 
     return dict_kilpailut
