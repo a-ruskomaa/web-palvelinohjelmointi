@@ -15,8 +15,9 @@ def create_app():
     db.init_app(app)
 
     # alustetaan autentikaatio
-    from tupa.modules.services.auth import init_auth
-    init_auth(app)
+    from tupa.modules.services.auth import oauth, authService
+    oauth.init_app(app)
+    authService.init_app(app)
 
     # rekisteröidään reitit
     from tupa.modules.blueprints import admin, auth, joukkueet, rastit, leimaukset

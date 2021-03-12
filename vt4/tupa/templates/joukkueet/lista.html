@@ -1,4 +1,4 @@
-{% extends "joukkueet/joukkue_base.html" %}
+{% extends "joukkueet/base.html" %}
 {% block title %}Listaa{% endblock %}
 {% block content %}
 
@@ -17,14 +17,48 @@
                     <li class='large'>{{joukkue['nimi']}}</li>
                     {% endif %}
                         <ul>
-                            {% for jasen in joukkue['jasenet'] %}
-                            <li>{{jasen}}</li>
-                            {% endfor %}
-                        </ul>
+                            <li>Jäsenet</li>
+                                <ul>
+                                    {% for jasen in joukkue['jasenet'] %}
+                                    <li>{{jasen}}</li>
+                                    {% endfor %}
+                                </ul>
+                            <li>Leimaukset</li>
+                                <ul>
+                                    {% if joukkue['saa_muokata'] %}
+                                    <li><a href="{{url_for('leimaukset.lisaa', joukkue=joukkue_id, kilpailu=kilpailu_id)}}">Lisää uusi leimaus</a></li>
+                                    {% endif %}
+                                    {% for leimaus_id, leimaus in joukkue['leimaukset'].items() %}
+                                        {% if joukkue['saa_muokata'] %}
+                                        <li><a href="{{url_for('leimaukset.muokkaa', id=leimaus_id, joukkue=joukkue_id, kilpailu=kilpailu_id)}}">{{leimaus['rasti']}}: {{leimaus['aika']}}</a></li>
+                                        {% else %}
+                                        <li>{{leimaus['rasti']}}: {{leimaus['aika']}}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                    </ul>
                 {% endfor %}
                 </ul>
             {% endfor %}
         </ul>
+        {% if kilpailu['rastit'] | length > 0 %}
+        <ul>
+            <li class='bold large'>Rastit:</li>
+            <ul>
+                {% for rasti_id, rasti in kilpailu['rastit'].items() %}
+                {% if rasti['saa_muokata'] %}
+                <li class='bold'><a href="{{url_for('rastit.muokkaa', id=rasti_id, kilpailu=kilpailu_id)}}">{{rasti['koodi']}}</a></li>
+                {% else %}
+                <li class='bold'>{{rasti['koodi']}}</li>
+                {% endif %}
+                <ul>
+                    <li>lat: {{rasti['lat']}}</li>
+                    <li>lon: {{rasti['lon']}}</li>
+                </ul>
+                {% endfor %}
+            </ul>
+        </ul>
+        {% endif %}
     {% endfor %}
 </ul>
 

@@ -1,10 +1,6 @@
 {% extends "layout.html" %}
 {% block title %}LOGIN{% endblock %}
 
-{% block nav %}
-{% include 'fragments/topnav.html' %}
-{% endblock %}
-
 {% block content %}
 <h1>Kirjaudu ylläpitäjänä</h1>
 {% for error in loginerrors %}

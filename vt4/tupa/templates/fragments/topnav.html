@@ -7,7 +7,10 @@
     {% if 'admin' in roles %}
     <li ><a href="{{url_for('rastit.lisaa')}}">Lisää rasti</a></li>
     <li ><a href="{{url_for('leimaukset.lisaa')}}">Lisää leimaus</a></li>
+    <li><a href="{{url_for('auth.admin_logout')}}">Poistu ylläpitotilasta</a></li>
     <li >ADMIN</li>
+    {% else %}
+    <li><a href="{{url_for('auth.admin_login')}}">Kirjaudu ylläpitäjänä</a></li>
     {% endif %}
     <li class='right'><a href="{{url_for('auth.logout')}}">Kirjaudu ulos</a> </li>
 </ul>

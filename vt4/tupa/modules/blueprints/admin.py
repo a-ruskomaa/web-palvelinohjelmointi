@@ -8,17 +8,7 @@ from tupa.modules.helpers.decorators import sallitut_roolit
 from tupa.modules.domain.joukkue import Joukkue
 from tupa.modules.helpers.auth import hashaa_salasana
 from tupa.modules.helpers.forms import LeimausForm, MuokkausForm, LisaysForm
-from tupa.modules.services.data.dataservice import (hae_joukkue_nimella, hae_joukkueen_leimaukset,
-                                            hae_kilpailun_rastit,
-                                            hae_kilpailut,
-                                            hae_joukkueet,
-                                            hae_joukkue,
-                                            paivita_joukkue,
-                                            lisaa_joukkue,
-                                            hae_kilpailun_rastit_ja_leimaukset,
-                                            paivita_leimaus,
-                                            poista_joukkue,
-                                            poista_leimaus)
+from tupa.modules.services.data import ds
 
 
 ### Ylläpitäjänä kirjautuneelle käyttäjälle näkyvä reitit ###

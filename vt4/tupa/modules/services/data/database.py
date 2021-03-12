@@ -1,7 +1,7 @@
-from datetime import datetime
 import json
 import os
 import requests
+from datetime import datetime
 from typing import List, Union
 from flask import g
 from google.cloud.datastore.client import Client
@@ -33,54 +33,8 @@ class Database:
         # valitaan tietokanta suoritusympäristön perusteella
         if app.env == 'development':
             self.db = DevDatastore(app)
-            self.init_test_db(self.db)
         else:
             self.db = ProdDatastore(app)
-
-
-    def init_test_db(self, db):
-        emulator_path = os.getenv('DATASTORE_EMULATOR_HOST')
-        requests.post('http://' + emulator_path + '/reset')
-
-        client = db.avaa_yhteys()
-        with open(os.path.join(os.getcwd(), 'data', 'data.json')) as data:
-            KILPAILUT = json.load(data)
-
-
-            for kilpailu in KILPAILUT:
-                child_entities = []
-                
-                parent_key = client.key("kilpailu")
-                parent_entity = Entity(parent_key)
-
-                for k, v in kilpailu.items():
-                    if k == 'sarjat' or k == 'rastit':
-                        continue
-                    elif k == 'alkuaika' or k == 'loppuaika':
-                        v = datetime.fromisoformat(v)
-                    parent_entity.update({k: v})
-                
-                client.put(parent_entity)
-
-                for sarja in kilpailu.get('sarjat'):
-                    child_key = client.key("sarja", parent=parent_entity.key)
-                    child_entity = Entity(child_key)
-
-                    child_entity.update(**sarja)
-
-                    child_entities.append(child_entity)
-
-                for rasti in kilpailu.get('rastit'):
-                    child_key = client.key("rasti", parent=parent_entity.key)
-                    child_entity = Entity(child_key)
-
-                    child_entity.update(**rasti)
-
-                    child_entities.append(child_entity)
-
-                client.put_multi(child_entities)
-
-                print(parent_entity)
 
 
     def avaa_yhteys(self) -> Client:
@@ -113,6 +67,7 @@ class Database:
 
         client = self.avaa_yhteys()
         if id:
+            print(f"Haetaan {kind} id:lla: {id}")
             key = self._rakenna_avain(client, kind, ancestors, id)
             entity = client.get(key)
 
@@ -145,11 +100,13 @@ class Database:
                 args.append(anc_id)
 
             ancestor_key = client.key(*args)
+            print(f"Haetaan monta: {kind} vanhemmilla:lla: {ancestor_key}")
             query = client.query(kind=kind, ancestor=ancestor_key)
         else:
             query = client.query(kind=kind)
 
         if filters:
+            print(f"Haetaan monta: {kind} parametreilla:lla: {filters}")
             for k,v in filters.items():
                 query.add_filter(k, '=', v)
 
@@ -228,6 +185,7 @@ class DevDatastore(Database):
 
     def __init__(self, app):
         os.environ["DATASTORE_PROJECT_ID"] = "emulated-project"
+        self.init_test_db()
 
 
     def avaa_yhteys(self) -> Client:
@@ -240,23 +198,50 @@ class DevDatastore(Database):
         return client
 
 
-    # def sulje_yhteys(self):
-    #     if self.conn is not None:
-    #         self.conn.close()
+    def init_test_db(self):
+        emulator_path = os.getenv('DATASTORE_EMULATOR_HOST')
+        requests.post('http://' + emulator_path + '/reset')
+
+        client = self.avaa_yhteys()
+        with open(os.path.join(os.getcwd(), 'data', 'data.json')) as data:
+            KILPAILUT = json.load(data)
 
 
-    # def tee_kutsu(self, con, query: str, params: dict = None) -> Cursor:
-    #     """ Suorittaa tietokantaan halutun kutsun parametreilla tai ilman.
-    #     Parametreja ei tarkisteta, vaan niiden on vastattava kutsua."""
-    #     try:
-    #         if params:
-    #             return con.execute(self._convert_query(query), params)
-    #         else:
-    #             return con.execute(self._convert_query(query))
-    #     except Exception as e:
-    #         print(f"***** DATABASE ERROR: *****")
-    #         print(e)
-    #         raise
+            for kilpailu in KILPAILUT:
+                child_entities = []
+                
+                parent_key = client.key("kilpailu")
+                parent_entity = Entity(parent_key)
+
+                for k, v in kilpailu.items():
+                    if k == 'sarjat' or k == 'rastit':
+                        continue
+                    elif k == 'alkuaika' or k == 'loppuaika':
+                        v = datetime.fromisoformat(v)
+                    parent_entity.update({k: v})
+                
+                client.put(parent_entity)
+
+                for sarja in kilpailu.get('sarjat'):
+                    child_key = client.key("sarja", parent=parent_entity.key)
+                    child_entity = Entity(child_key)
+
+                    child_entity.update(**sarja)
+
+                    child_entities.append(child_entity)
+
+                for rasti in kilpailu.get('rastit'):
+                    child_key = client.key("rasti", parent=parent_entity.key)
+                    child_entity = Entity(child_key)
+
+                    child_entity.update(**rasti)
+
+                    child_entities.append(child_entity)
+
+                client.put_multi(child_entities)
+
+                print(parent_entity)
+
 
 
 class ProdDatastore(Database):
@@ -267,20 +252,3 @@ class ProdDatastore(Database):
     def avaa_yhteys(self) -> Client:
         client = Client()
         return client
-
-
-    # def sulje_yhteys(self):
-    #     self.cnx.close()
-
-
-    # def tee_kutsu(self, cnx, query: str, params: dict = None) -> Cursor:
-    #     """ Suorittaa tietokantaan halutun kutsun parametreilla tai ilman. """
-
-    #     cursor = cnx.cursor(dictionary=True, buffered=True)
-        
-    #     if params:
-    #         cursor.execute(query, params)
-    #     else:
-    #         cursor.execute(query)
-            
-    #     return cursor

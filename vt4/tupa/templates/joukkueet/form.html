@@ -1,4 +1,4 @@
-{% extends "joukkueet/joukkue_base.html" %}
+{% extends "joukkueet/base.html" %}
 {% block title %}Muokkaa{% endblock %}
 {% block content %}
 
@@ -7,7 +7,61 @@
 {% else %}
 <h1>Muokkaa joukkuetta</h1>
 {% endif %}
-{% include 'fragments/joukkueform.html' %}
+<form class="joukkueform" action="{{action_url}}" method="POST">
+    {{ form.csrf_token }}
+    <fieldset>
+      {{ form.id }}
+        
+      {% if mode=='lisaa' %}
+      <div class="clear">
+        {{form.kilpailu.label}}
+        <div class="input-container">
+          {% for subfield in form.kilpailu %}
+          <div>{{ subfield }} {{ subfield.label }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      <button class="clear" type="submit"  formnovalidate='formnovalidate' formmethod="get" formaction="{{action_url}}">Valitse</button>
+      {% else %}
+        {{ form.kilpailu }}
+        {{ form.vanha_sarja }}
+      {% endif %}
+  
+      <div class="clear">
+        {{ form.nimi.label }}
+        <div class="input-container">{{ form.nimi }}</div>
+        {% for error in form.nimi.errors %}
+        <span class="error right">{{ error|e }}</span> {% endfor %}
+      </div>
+  
+      <div class="clear">
+        {{form.sarja.label}}
+        {% for error in form.sarja.errors %}
+        <span class="error right">{{ error|e }}</span>
+        {% endfor %}
+        <div class="input-container">
+          {% for subfield in form.sarja %}
+          <div>{{ subfield }} {{ subfield.label }}</div>
+          {% endfor %}
+        </div>
+      </div>
+  
+  
+      <div class="clear">
+        {{ form.jasenet.label }}
+        {% for error in form.jasenet.errors %}
+        <span class="error right">{{ error|e }}</span>
+        {% endfor %}
+        <div class="input-container">{{ form.jasenet }}</div>
+      </div>
+  
+      {% if mode=='muokkaa' %}
+      <div class="clear">{{ form.poista.label }}{{ form.poista }}</div>
+      {% endif %}
+      <button class="clear" type="submit">Tallenna</button>
+    </fieldset>
+  </form>
+  
 <a href="{{url_for('joukkueet.listaa')}}">Takaisin listaukseen</a>
 
 {% endblock %}

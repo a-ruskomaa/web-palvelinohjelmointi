@@ -1,0 +1,50 @@
+{% extends "rastit/base.html" %}
+{% block title %}Muokkaa{% endblock %}
+{% block content %}
+
+{% if mode=='lisaa' %}
+<h1>Lisää rasti</h1>
+{% else %}
+<h1>Muokkaa rastia</h1>
+{% endif %}
+
+<form class="rastiform" action="{{action_url}}" method="POST">
+    {{ form.csrf_token }}
+    <fieldset>
+      {{ form.id }}
+      {{ form.kilpailu }}
+  
+      <div class="clear">
+        {{ form.koodi.label }}
+        <div class="input-container">{{ form.koodi }}</div>
+        {% for error in form.koodi.errors %}
+        <span class="error right">{{ error|e }}</span> {% endfor %}
+      </div>
+  
+  
+      <div class="clear">
+        {{ form.lat.label }}
+        <div class="input-container">{{ form.lat }}</div>
+        {% for error in form.lat.errors %}
+        <span class="error right">{{ error|e }}</span> {% endfor %}
+      </div>
+  
+  
+      <div class="clear">
+        {{ form.lon.label }}
+        <div class="input-container">{{ form.lon }}</div>
+        {% for error in form.lon.errors %}
+        <span class="error right">{{ error|e }}</span> {% endfor %}
+      </div>
+  
+  
+      {% if mode=='muokkaa' %}
+      <div class="clear">{{ form.poista.label }}{{ form.poista }}</div>
+      {% endif %}
+      <button class="clear" type="submit">Tallenna</button>
+    </fieldset>
+  </form>
+  
+<a href="{{url_for('joukkueet.listaa')}}">Takaisin listaukseen</a>
+
+{% endblock %}

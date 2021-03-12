@@ -1,16 +1,14 @@
 import logging
-from os import killpg
-from tupa.modules.helpers.decorators import sallitut_roolit
-
 from flask.globals import current_app
-from tupa.modules.services.data.dataservice import hae_kilpailut
+from tupa.modules.services.data import ds
+from tupa.modules.services.auth import authService
 from tupa.modules.helpers.forms import AdminLoginForm
-from tupa.modules.helpers.auth import hashaa_salasana, tarkista_salasana
+from tupa.modules.helpers.decorators import sallitut_roolit
+from tupa.modules.helpers.auth import tarkista_salasana
 from tupa.modules.helpers.errors import AuthenticationError
 from flask import Blueprint, session, redirect
 from flask.helpers import url_for
 from flask.templating import render_template
-from tupa.modules.services.auth import redirect_to_auth_login, parse_user_from_token
 
 bp = Blueprint('auth', __name__, url_prefix='')
 
@@ -22,7 +20,7 @@ def login():
     # Generate the url where OAuth provider will send the auth token
     callback_url = url_for('auth.login_callback', _external=True)
 
-    return redirect_to_auth_login(callback_url=callback_url)
+    return authService.redirect_to_auth_login(callback_url=callback_url)
 
 
 # Logout endpoint
@@ -44,7 +42,7 @@ def login_callback():
         # Parses the user id and roles from the response. Authlib
         # grabs the token from the response context that does not have
         # to be passed explicitly.
-        user = parse_user_from_token()
+        user = authService.parse_user_from_token()
         user['roolit'] = ['perus']
         logging.info(f"Received token for: {user}")
 
@@ -73,7 +71,7 @@ def admin_login():
         return redirect(url_for('joukkueet.listaa'))
 
     # luodaan kirjautumislomake
-    kilpailut = hae_kilpailut()
+    kilpailut = ds.hae_kilpailut()
     form = AdminLoginForm()
     arr_kilpailut = [(kilpailu.key.id, kilpailu['nimi']) for kilpailu in kilpailut]
     form.kilpailu.choices = arr_kilpailut
