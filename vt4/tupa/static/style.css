@@ -108,6 +108,11 @@ form.leimausform {
   min-width: fit-content;
 }
 
+form.rastiform {
+  max-width: 20%;
+  min-width: fit-content;
+}
+
 form.joukkueform li {
   list-style-type: none;
 }
@@ -144,7 +149,7 @@ button {
   font-size: large;
 }
 
-form.joukkueform button, form.leimausform button {
+form.joukkueform button, form.leimausform button, form.rastiform button {
   background-color: white;
   border: 2px solid #3395DD ;
   border-radius: 10px;

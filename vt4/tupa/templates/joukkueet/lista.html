@@ -3,6 +3,10 @@
 {% block content %}
 
 <h1>Kilpailun sarjat ja joukkueet:</h1>
+
+{% if kilpailut | length == 0 %}
+<p class="bold large error">Ei kilpailuja!</p>
+{% else %}
 <ul>
     {% for kilpailu_id, kilpailu in kilpailut.items() %}
     <li class='bold large'>{{kilpailu['nimi']}}</li>
@@ -25,14 +29,14 @@
                                 </ul>
                             <li>Leimaukset</li>
                                 <ul>
-                                    {% if joukkue['saa_muokata'] %}
-                                    <li><a href="{{url_for('leimaukset.lisaa', joukkue=joukkue_id, kilpailu=kilpailu_id)}}">Lisää uusi leimaus</a></li>
+                                    {% if 'admin' in roles and ((valittu_kilpailu | int) == kilpailu_id) %}
+                                    <li><a href="{{url_for('leimaukset.lisaa', joukkue=joukkue_id, sarja=sarja_id, kilpailu=kilpailu_id)}}">Lisää uusi leimaus</a></li>
                                     {% endif %}
                                     {% for leimaus_id, leimaus in joukkue['leimaukset'].items() %}
-                                        {% if joukkue['saa_muokata'] %}
-                                        <li><a href="{{url_for('leimaukset.muokkaa', id=leimaus_id, joukkue=joukkue_id, kilpailu=kilpailu_id)}}">{{leimaus['rasti']}}: {{leimaus['aika']}}</a></li>
+                                        {% if 'admin' in roles and (valittu_kilpailu | int) == kilpailu_id %}
+                                        <li><a href="{{url_for('leimaukset.muokkaa', id=leimaus_id, joukkue=joukkue_id, sarja=sarja_id, kilpailu=kilpailu_id)}}">{{hae_koodi(kilpailu_id, leimaus_id)}}: {{leimaus}}</a></li>
                                         {% else %}
-                                        <li>{{leimaus['rasti']}}: {{leimaus['aika']}}</li>
+                                        <li>{{hae_koodi(kilpailu_id, leimaus_id)}}: {{leimaus}}</li>
                                         {% endif %}
                                     {% endfor %}
                                 </ul>
@@ -61,5 +65,6 @@
         {% endif %}
     {% endfor %}
 </ul>
+{% endif %}
 
 {% endblock %}

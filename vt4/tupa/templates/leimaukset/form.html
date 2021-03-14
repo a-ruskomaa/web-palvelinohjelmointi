@@ -13,6 +13,7 @@
   <fieldset>
     {{ form.id }}
     {{ form.kilpailu }}
+    {{ form.sarja }}
     {{ form.joukkue }}
 
       <div>
@@ -32,7 +33,9 @@
           {% endfor %}
       </div>
 
-      <div>{{ form.poista.label }}{{ form.poista }}</div>
+      {% if mode=='muokkaa' %}
+      <div class="clear">{{ form.poista.label }}{{ form.poista }}</div>
+      {% endif %}
       <button type="submit">Tallenna</button>
   </fieldset>
 </form>

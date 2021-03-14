@@ -1,11 +1,11 @@
 import json
 import os
-import requests
 from datetime import datetime
 from typing import List, Union
 from flask import g
 from google.cloud.datastore.client import Client
 from google.cloud.datastore.entity import Entity
+from google.cloud.datastore.key import Key
 
 class Database:
     """ Tietokantatoteutuksen piilottava luokka.
@@ -24,17 +24,18 @@ class Database:
     
 
     def init_app(self, app):
-        """ Alustaa tietokannan. Valitsee käytetyn
-        tietokantajärjestelmän suoritusympäsistön mukaan."""
+        """ Alustaa tietokannan. """
 
-        # tietokantayhteys katkaistaan automaattisesti käsitellyn HTTP-pyynnön jälkeen
+        # asetetaan tietokantayhteys katkeamaan automaattisesti käsitellyn HTTP-pyynnön jälkeen
         app.teardown_appcontext(self.sulje_yhteys)
 
-        # valitaan tietokanta suoritusympäristön perusteella
+        # alustetaan tarvittaessa testitietokanta
         if app.env == 'development':
-            self.db = DevDatastore(app)
-        else:
-            self.db = ProdDatastore(app)
+            client = Client()
+            query = client.query(kind='kilpailu')
+            query.keys_only()
+            if len(list(query.fetch())) == 0:
+                self._init_test_db()
 
 
     def avaa_yhteys(self) -> Client:
@@ -44,7 +45,7 @@ class Database:
 
         # ensimmäinen tietokantakutsu avaa uuden yhteyden
         if 'db_conn' not in g:
-            g.db_conn = self.db.avaa_yhteys()
+            g.db_conn = Client()
 
         # palautetaan yhteys asiakkaan käyttöön
         return g.db_conn
@@ -58,21 +59,22 @@ class Database:
 
         db_conn = g.pop('db_conn', None)
 
-        # if db_conn is not None:
-        #     db_conn.close()
 
-
-    def hae_yksi(self, kind: str, id: int = None, ancestors: dict = None, filters: dict = None) -> Entity:
-        """ Suorittaa tietokantaan yhden rivin palauttavan haun. """
+    def hae_yksi(self, kind: str, id: int = None, ancestors: dict = None, filters: dict = None) -> Union[Entity, None]:
+        """ Suorittaa tietokantaan yhden rivin palauttavan haun. Rivi voidaan etsiä
+        id:n ja vanhempien perusteella, tai etsimiseen voidaan käyttää filters-hakemistoa
+        jolloin tietokannasta etsitään rivejä joiden attribuutit vastaavat hakemistossa
+        annettuja attribuutteja, esim. {'nimi': "Kintturogaining'}. """
 
         client = self.avaa_yhteys()
+        
+        # etsitään ensisijaisesti id:n perusteella
         if id:
-            print(f"Haetaan {kind} id:lla: {id}")
             key = self._rakenna_avain(client, kind, ancestors, id)
             entity = client.get(key)
-
+        
+        # jos avainta ei annettu, etsitään filttereiden perusteella
         elif filters:
-            print(f"Haetaan {kind} parametreilla:lla: {filters}")
             query = client.query(kind=kind)
             for k,v in filters.items():
                 query.add_filter(k, '=', v)
@@ -83,124 +85,107 @@ class Database:
             # palautetaan ensimmäinen osuma tai None
             entity = next(query_iter, None)
 
-        print(entity)
-
-        return entity if entity else None
+        return entity
 
 
-    def hae_monta(self, kind: str, ancestors: dict = None, filters: dict = None) -> List[Entity]:
-        """ Suorittaa tietokantaan monta riviä palauttavan haun. """
+    def hae_monta(self, kind: str, ancestors: dict = None, filters: dict = None, order: list = None) -> List[Entity]:
+        """ Suorittaa tietokantaan monta riviä palauttavan haun. Haku voidaan suorittaa pelkän tyypin
+        perusteella, tai hakuun voidaan liittää muita rajausehtoja. Hakutulokset voi myös järjestää
+        order-parametrina annettavan listan mukaisten atribuuttien mukaiseen järjestykseen."""
 
         client = self.avaa_yhteys()
 
+        query = client.query(kind=kind)
+
+        # Lisätään kyselyyn haetun alkion vanhemmat.
         if ancestors:
-            args = []
+            key_args = []
+
+            # Vanhemmat tulee antaa järjestyksessä siten, että "vanhin" on
+            # ensimmäisenä alkiona. Ei toimi vanhemmilla python-versioilla,
+            # joissa hakemiston järjestys ei ole pysyvä.
             for anc_kind, anc_id in ancestors.items():
-                args.append(anc_kind)
-                args.append(anc_id)
+                key_args.append(anc_kind)
+                key_args.append(anc_id)
 
-            ancestor_key = client.key(*args)
-            print(f"Haetaan monta: {kind} vanhemmilla:lla: {ancestor_key}")
-            query = client.query(kind=kind, ancestor=ancestor_key)
-        else:
-            query = client.query(kind=kind)
+            query.ancestor = client.key(*key_args)
 
+        # lisätään järjestysehto
+        if order:
+            query.order = order
+
+        # lisätään muut rajausehdot
         if filters:
-            print(f"Haetaan monta: {kind} parametreilla:lla: {filters}")
             for k,v in filters.items():
                 query.add_filter(k, '=', v)
 
-        return list(query.fetch())
+        res = list(query.fetch())
+
+        return res
 
 
     def kirjoita(self, kind: str, obj: object, id: int = None, ancestors: dict = None) -> int:
-        """ Suorittaa tietokantaan kirjoitusoperaation. Kirjoitusoperaatiot 
-        kommitoidaan automaattisesti"""
+        """ Suorittaa tietokantaan kirjoitusoperaation. Jos tunnisteeksi annetaan alkion
+        id, päivitetään aiempi alkio."""
 
         client = self.avaa_yhteys()
-
-        print(f"Lisätään {kind}...")
-
         key = self._rakenna_avain(client, kind, ancestors, id)
 
-        print(f"Avain: {key}")
+        entity = None
 
+        # jos id on annettu, haetaan päivitettävä alkio
         if id:
             entity = client.get(key)
-        else:
+
+        # tarvittaessa luodaan uusi alkio
+        if not entity:
             entity = Entity(key)
 
+        # lisätään päivitetty alkio tietokantaan
         entity.update(obj)
-
         client.put(entity)
-
-        print(entity)
 
         return entity.id
 
 
     def poista(self, kind: str, id: int, ancestors: dict = None, ):
+        """ Poistaa alkion tietokannasta. Tunnisteeksi annettava alkion
+        id ja mahdolliset vanhemmat. """
 
         client = self.avaa_yhteys()
-
-        print(f"Poistetaan {kind}...")
 
         key = self._rakenna_avain(client, kind, ancestors, id)
 
         client.delete(key)
 
 
-    def _rakenna_avain(self, client: Client, kind: str, ancestors: dict = None, id: int = None):
-        print(id, kind, ancestors)
+    def _rakenna_avain(self, client: Client, kind: str, ancestors: dict = None, id: int = None) -> Key:
+        """ Apufunktio, joka luo alkiolle avaimen annetun tyypin ja mahdollisen id:n ja vanhempien
+        perusteella. """
+
         key_path = []
-        
-        # yleisin ensin
+
+        # Vanhemmat tulee antaa järjestyksessä siten, että "vanhin" on
+        # ensimmäisenä alkiona. Ei toimi vanhemmilla python-versioilla,
+        # joissa hakemiston järjestys ei ole pysyvä.
         if ancestors:
             for anc_kind, anc_id in ancestors.items():
                 key_path.append(anc_kind)
                 key_path.append(anc_id)
 
+        # Lisätään avaimen polkuun haetun alkion tyyppi
         key_path.append(kind)
+
+        # jos id annettu, lisätään myös se
         if id:
             key_path.append(id)
         
         return client.key(*key_path)
 
 
-    # def tee_kutsu(self, query: str, params: dict = None, commit: bool = False) -> Union[Cursor,MySQLCursorBufferedDict]:
-    #     """ Delegoi tietokantakutsun tietokantakohteiselle toteutukselle. """
-    #     con = self.avaa_yhteys()
 
-    #     vastaus = self.db.tee_kutsu(con, query, params)
-
-    #     # päätetään kirjoitusoperaation transaktio
-    #     # commit on oletuksena False jotta ei kutsuta turhaan lukuoperaatioissa
-    #     if commit:
-    #         con.commit()
-    #     return vastaus
-
-
-
-class DevDatastore(Database):
-
-    def __init__(self, app):
-        os.environ["DATASTORE_PROJECT_ID"] = "emulated-project"
-        self.init_test_db()
-
-
-    def avaa_yhteys(self) -> Client:
-        client = Client(
-            project="emulated-project",
-            namespace='ns_test',
-            credentials=None
-        )
-
-        return client
-
-
-    def init_test_db(self):
-        emulator_path = os.getenv('DATASTORE_EMULATOR_HOST')
-        requests.post('http://' + emulator_path + '/reset')
+    def _init_test_db(self):
+        """ Lisää annetun testidatan tietokantaan """
 
         client = self.avaa_yhteys()
         with open(os.path.join(os.getcwd(), 'data', 'data.json')) as data:
@@ -239,16 +224,3 @@ class DevDatastore(Database):
                     child_entities.append(child_entity)
 
                 client.put_multi(child_entities)
-
-                print(parent_entity)
-
-
-
-class ProdDatastore(Database):
-
-    def __init__(self, app):
-        pass
-
-    def avaa_yhteys(self) -> Client:
-        client = Client()
-        return client

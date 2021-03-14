@@ -12,48 +12,43 @@ from flask.templating import render_template
 
 bp = Blueprint('auth', __name__, url_prefix='')
 
-# This will work as the login endpoint
+
 @bp.route('/login', methods=['GET'])
 def login():
+    """ Polku sisäänkirjautumista varten """
     logging.debug("Login page requested.")
 
-    # Generate the url where OAuth provider will send the auth token
+    # Luodaan url oauth-palvelimen takaisinkutsua varten
     callback_url = url_for('auth.login_callback', _external=True)
 
+    # uudelleenohjataan autentikaatiopalvelimelle
     return authService.redirect_to_auth_login(callback_url=callback_url)
 
 
-# Logout endpoint
 @bp.route('/logout', methods=['GET'])
 def logout():
+    """ Polku uloskirjautumista varten varten """
     logging.debug("Logout requested.")
 
-    # Removes the user from the session, effectively logging them out
+    # poistetaan käyttäjä sessiosta, joka estää pääsyn kirjautumista vaativille sivuille
     session.pop('kayttaja', None)
 
+    # ohjataan takaisin etusivulle
     return redirect(url_for('index'))
 
 
-# This will be used as the redirect address for OAuth
 @bp.route('/login-callback', methods=['GET'])
 def login_callback():
+    """ Polku autentikaatiopalvelimen takaisinkutsua varten """
     logging.debug("Received callback from OAuth server")
     try:
-        # Parses the user id and roles from the response. Authlib
-        # grabs the token from the response context that does not have
-        # to be passed explicitly.
+        # parsitaan käyttäjän tiedot tokenista
         user = authService.parse_user_from_token()
-        user['roolit'] = ['perus']
         logging.info(f"Received token for: {user}")
-
-        # Stores the user information in the session context. This will cause
-        # flask to automatically return a session cookie that will be used to
-        # id the user during further requests.
+        
+        # lisätään peruskäyttäjän oikeudet ja tallennetaan käyttäjä sessioon
+        user['roolit'] = ['perus'] 
         session['kayttaja'] = user
-
-        # If the user has admin status, redirect them to admin page after login
-        # if 'admin' in user['roles']:
-        #     return redirect(url_for("joukkueet."))
 
     except Exception as e:
         logging.error(f"Exception during authentication:")
@@ -65,17 +60,21 @@ def login_callback():
 @bp.route('/admin/login', methods=['GET','POST'])
 @sallitut_roolit(['perus'])
 def admin_login():
-    """Reitti, jonka kautta ylläpitäjät kirjautuvat sovellukseen"""
+    """ Ylläpitäjän sisäänkirjautumissivu """
 
-    if 'admin' in session['kayttaja']['roolit']:
+    kilpailut = ds.hae_kilpailut()
+
+    if len(kilpailut) == 0:
         return redirect(url_for('joukkueet.listaa'))
 
-    # luodaan kirjautumislomake
-    kilpailut = ds.hae_kilpailut()
+    # luodaan kilpailukohtainen kirjautumislomake
     form = AdminLoginForm()
+
+    # lisätään kilpailut valinnoiksi
     arr_kilpailut = [(kilpailu.key.id, kilpailu['nimi']) for kilpailu in kilpailut]
     form.kilpailu.choices = arr_kilpailut
 
+    # valitaan tarvittaessa ensimmäinen kilpailu valmiiksi
     if not form.kilpailu.data:
         form.kilpailu.data = arr_kilpailut[0][0]
 
@@ -96,7 +95,7 @@ def admin_login():
             kayttaja['roolit'].append('admin')
             session['kayttaja'] = kayttaja
 
-            # tallennetaan sessioon tieto valinnoista
+            # tallennetaan sessioon tieto valitusta kilpailusta
             session['kilpailu'] = form.kilpailu.data
 
             # ohjataan sisäänkirjautumisen jälkeen kilpailulistaukseen
@@ -114,13 +113,16 @@ def admin_login():
 @bp.route('/admin/logout', methods=['GET','POST'])
 @sallitut_roolit(['admin'])
 def admin_logout():
-    print("poistutaan admin-tilasta")
+    """ Ylläpitäjän uloskirjautuminen """
+
     # poistetaan admin käyttäjän rooleista
     # ei tarvitse try exceptiä kun pääsy on rajattu vain admineille
     kayttaja = session['kayttaja']
     kayttaja['roolit'].remove('admin')
     session['kayttaja'] = kayttaja
 
+    # poistetaan myös tieto valitusta kilpailusta
+    session.pop('kilpailu')
 
     # ohjataan takaisin kilpailulistaukseen
     return redirect(url_for('joukkueet.listaa'))
