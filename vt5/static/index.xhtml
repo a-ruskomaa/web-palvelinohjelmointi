@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="fi" xmlns="http://www.w3.org/1999/xhtml" xml:lang="fi">
+    <head>
+        <script src="vt5.js"></script>
+        <link rel="StyleSheet" href="tyylit.css" type="text/css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta charset="utf-8"/>
+        <title>Tulospalvelu</title>
+    </head>
+    <body><!-- 
+ Voit käyttää tätä valmista pohjaa viikkotehtävässäsi
+ Kirjoita mahdollisimman paljon valmista HTML-koodia ja luo javascriptilla dynaamisesti
+ vain tarpeelliset ja muuttuvat osat
+  -->
+<!-- Seuraavassa näkyy kulloinkin valittuna olevan kilpailun nimi. Oletuksena
+pitää näkyä kilpailu, jonka aloitusaika on lähinnä -->
+       <h1>Kilpailun nimi</h1>
+
+<!-- Tällä voi vaihtaa milloin tahansa valittua kilpailua -->
+<label id="kilpailu">Valitse kilpailu <select name="kilpailu">
+<option>Kilpailu 1</option>
+<option>Kilpailu 2</option>
+<option>Kilpailu 3</option>
+<option>Kilpailu 4</option>
+</select></label>
+
+<main>
+<section>
+<input type="radio" name="tabs" id="joukkue" checked="checked" />
+<label for="joukkue">Joukkue </label>
+<div class="tab">
+<form>
+<p>Tähän tulee lomake, jolla voi lisätä valittuna olevaan kilpailuun joukkueen tai
+muokata jo lisättyä joukkuetta</p>
+</form>
+</div>
+</section>
+
+<section>
+<input type="radio" name="tabs" id="joukkueet" checked="checked" />
+<label for="joukkueet">Joukkueet</label>
+<div class="tab">
+<!-- Tähän lista valitun kilpailun sarjoista, joukkueista ja joukkueiden jäsenistä.
+Listauksessa pitää näkyä oma lisätty tai muutettu joukkue kaikkine tietoineen
+
+ -->
+<ul>
+<li>Sarja 1
+ <ul>
+  <li>Joukkue A
+    <ul>
+      <li>Jäsen A</li>
+      <li>Jäsen B</li>
+      <li>Jäsen C</li>
+    </ul>
+  </li>
+  <li>Joukkue B
+    <ul>
+      <li>Jäsen A</li>
+      <li>Jäsen B</li>
+      <li>Jäsen C</li>
+    </ul>
+  </li>
+  <li>....</li>
+ </ul>
+</li>
+<li>Sarja 2</li>
+<li>Sarja 3</li>
+</ul>
+</div>
+</section>
+</main>
+
+<!--
+<section>
+<input type="radio" name="tabs" id="leimaukset" checked="checked" />
+<label for="leimaukset">Rastileimaukset</label>
+<div class="tab">
+<form>
+Täällä voi joukkue muokata rastileimauksiaan
+</form>
+</div>
+</section>
+-->
+
+</body>
+</html>
+
+
