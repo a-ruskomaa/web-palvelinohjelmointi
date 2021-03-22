@@ -20,8 +20,20 @@ body {
   font-weight: bold;
 }
 
+.normal {
+  font-weight: normal;
+}
+
 .large {
   font-size: large;
+}
+
+.medium {
+  font-size: medium;
+}
+
+.italic {
+  font-style: italic;
 }
 
 .error {

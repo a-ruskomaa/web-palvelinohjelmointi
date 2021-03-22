@@ -1,6 +1,7 @@
 <!doctype html>
-<html>
+<html lang="fi">
   <head>
+    <meta charset="utf-8"/>
     <title>{% block title %}{% endblock %}</title>
     <link rel='stylesheet' href="{{url_for('static', filename='style.css')}}">
   </head>
@@ -12,5 +13,39 @@
     </nav>
     <div id="content">{% block content %}{% endblock %}</div>
     {% block footer %}{% endblock %}
+    <!-- HTMLinspectoria käytetään validointiin. Kannattaa
+vielä varmuuden vuoksi ajaa välillä myös W3C:n validaattori -->
+<!-- Sivun validoinnin W3C:n validaattorilla voit tehdä milloin tahansa näppäinyhdistelmällä CTRL+ALT+V -->
+<script src="https://appro.mit.jyu.fi/tools/htmlinspector/html-inspector.js"></script>
+<script src="https://appro.mit.jyu.fi/tools/validator/validator.js"></script>
+<script>
+//<![CDATA[
+function HTMLvalidointi() {
+      try {
+         const parser = new DOMParser();
+         const dom = parser.parseFromString(document.documentElement.outerHTML, "application/xhtml+xml");
+      } 
+      catch (e) {
+            console.warn(e);
+      }
+		HTMLInspector.inspect( {
+        		domRoot: "html",
+        		useRules: null,
+       			 excludeRules: ["script-placement","unnecessary-elements"],
+        		excludeElements: "svg",
+        		excludeSubTrees: ["svg","iframe"],
+        		onComplete: function(errors) {
+                		errors.forEach(function(error) {
+                        	console.warn(error.message, error.context);
+                		});
+
+		        }
+        	} );
+
+        }
+
+window.addEventListener("load", HTMLvalidointi); // ajaa html-inspectorin
+//]]>
+</script>
   </body>
 </html>
