@@ -1,90 +1,175 @@
-
 <!DOCTYPE html>
 <html lang="fi" xmlns="http://www.w3.org/1999/xhtml" xml:lang="fi">
-    <head>
-        <script src="static/vt5.js"></script>
-        <link rel="StyleSheet" href="static/tyylit.css" type="text/css" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta charset="utf-8"/>
-        <title>Tulospalvelu</title>
-    </head>
-    <body><!-- 
- Voit käyttää tätä valmista pohjaa viikkotehtävässäsi
- Kirjoita mahdollisimman paljon valmista HTML-koodia ja luo javascriptilla dynaamisesti
- vain tarpeelliset ja muuttuvat osat
-  -->
-<!-- Seuraavassa näkyy kulloinkin valittuna olevan kilpailun nimi. Oletuksena
-pitää näkyä kilpailu, jonka aloitusaika on lähinnä -->
-       <h1>Kilpailun nimi</h1>
+  <head>
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/8.3.1/firebase-app.js"></script>
 
-<!-- Tällä voi vaihtaa milloin tahansa valittua kilpailua -->
-<label id="kilpailu">Valitse kilpailu <select name="kilpailu">
-<option>Kilpailu 1</option>
-<option>Kilpailu 2</option>
-<option>Kilpailu 3</option>
-<option>Kilpailu 4</option>
-</select></label>
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+           https://firebase.google.com/docs/web/setup#available-libraries -->
+    <script src="https://www.gstatic.com/firebasejs/8.3.1/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.1/firebase-firestore.js"></script>
+    <script src="static/vt5.js"></script>
+    <link rel="StyleSheet" href="static/tyylit.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <title>Tulospalvelu</title>
+  </head>
+  <body>
+    <!-- 
+    Voit käyttää tätä valmista pohjaa viikkotehtävässäsi
+    Kirjoita mahdollisimman paljon valmista HTML-koodia ja luo javascriptilla dynaamisesti
+    vain tarpeelliset ja muuttuvat osat
+      -->
+    <!-- Seuraavassa näkyy kulloinkin valittuna olevan kilpailun nimi. Oletuksena
+  pitää näkyä kilpailu, jonka aloitusaika on lähinnä -->
+    <h1>Kilpailun nimi</h1>
 
-<main>
-<section>
-<input type="radio" name="tabs" id="joukkue" checked="checked" />
-<label for="joukkue">Joukkue </label>
-<div class="tab">
-<form>
-<p>Tähän tulee lomake, jolla voi lisätä valittuna olevaan kilpailuun joukkueen tai
-muokata jo lisättyä joukkuetta</p>
-</form>
-</div>
-</section>
+    <button id="login-button">Login</button>
+    <button id="logout-button">Logout</button>
+    <button id="server-button">Call server</button>
 
-<section>
-<input type="radio" name="tabs" id="joukkueet" checked="checked" />
-<label for="joukkueet">Joukkueet</label>
-<div class="tab">
-<!-- Tähän lista valitun kilpailun sarjoista, joukkueista ja joukkueiden jäsenistä.
-Listauksessa pitää näkyä oma lisätty tai muutettu joukkue kaikkine tietoineen
+    <section id="section-kilpailu" hidden="hidden">
+      <div id="kilpailu-content">
+        <!-- Tällä voi vaihtaa milloin tahansa valittua kilpailua -->
+        <label for="kilpailu">Valitse kilpailu</label>
+        <select name="kilpailu">
+          <!-- <option>Kilpailu 1</option>
+        <option>Kilpailu 2</option>
+        <option>Kilpailu 3</option>
+        <option>Kilpailu 4</option> -->
+        </select>
+      </div>
+    </section>
 
- -->
-<ul>
-<li>Sarja 1
- <ul>
-  <li>Joukkue A
-    <ul>
-      <li>Jäsen A</li>
-      <li>Jäsen B</li>
-      <li>Jäsen C</li>
-    </ul>
-  </li>
-  <li>Joukkue B
-    <ul>
-      <li>Jäsen A</li>
-      <li>Jäsen B</li>
-      <li>Jäsen C</li>
-    </ul>
-  </li>
-  <li>....</li>
- </ul>
-</li>
-<li>Sarja 2</li>
-<li>Sarja 3</li>
-</ul>
-</div>
-</section>
-</main>
+    <main>
+      <section id="section-tabs" hidden="hidden">
+        <div id="tabs-content">
+          <section>
+            <input
+              class="tab-toggle"
+              type="radio"
+              name="tabs"
+              id="joukkue"
+              checked="checked"
+            />
+            <label class="tab-label" for="joukkue">Joukkue </label>
+            <div class="tab" id="tab-joukkueform">
+              <form class="joukkueform">
+                <fieldset>
 
-<!--
-<section>
-<input type="radio" name="tabs" id="leimaukset" checked="checked" />
-<label for="leimaukset">Rastileimaukset</label>
-<div class="tab">
-<form>
-Täällä voi joukkue muokata rastileimauksiaan
-</form>
-</div>
-</section>
--->
+                  <div class="clear">
+                    <label for="jasenform-nimi">Nimi</label>
+                    <div class="input-container">
+                      <input
+                        id="jasenform-nimi"
+                        name="nimi"
+                        required="required"
+                        type="text"
+                        value=""
+                      />
+                    </div>
+                  </div>
 
-</body>
+                  <div class="clear">
+                    <label for="jasenform-sarjat">Sarja</label>
+                    <div class="input-container" id="jasenform-sarjat">
+                    </div>
+                  </div>
+
+                  <div class="clear">
+                    <label for="jasenform-jasenet">Jäsenet</label>
+                    <div class="input-container">
+                      <ul id="jasenform-jasenet">
+                        <li>
+                          <label for="jasen-0">Jäsen 1</label>
+                          <input
+                            id="jasen-0"
+                            name="jasen"
+                            type="text"
+                            value=""
+                          />
+                        </li>
+                        <li>
+                          <label for="jasen-1">Jäsen 2</label>
+                          <input
+                            id="jasen-1"
+                            name="jasen"
+                            type="text"
+                            value=""
+                          />
+                        </li>
+                        <li>
+                          <label for="jasen-2">Jäsen 3</label>
+                          <input
+                            id="jasen-2"
+                            name="jasen"
+                            type="text"
+                            value=""
+                          />
+                        </li>
+                        <li>
+                          <label for="jasen-3">Jäsen 4</label>
+                          <input
+                            id="jasen-3"
+                            name="jasen"
+                            type="text"
+                            value=""
+                          />
+                        </li>
+                        <li>
+                          <label for="jasen-4">Jäsen 5</label>
+                          <input
+                            id="jasen-4"
+                            name="jasen"
+                            type="text"
+                            value=""
+                          />
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <button class="clear" type="submit">Tallenna</button>
+                </fieldset>
+              </form>
+            </div>
+          </section>
+
+          <section>
+            <input class="tab-toggle" type="radio" name="tabs" id="joukkueet" />
+            <label class="tab-label" for="joukkueet">Joukkueet</label>
+            <div class="tab" id="tab-joukkuelista">
+              <!-- Tähän lista valitun kilpailun sarjoista, joukkueista ja joukkueiden jäsenistä.
+              Listauksessa pitää näkyä oma lisätty tai muutettu joukkue kaikkine tietoineen -->
+              <div id="joukkuelista">
+                
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <input
+              class="tab-toggle"
+              type="radio"
+              name="tabs"
+              id="leimaukset"
+            />
+            <label class="tab-label" for="leimaukset">Rastileimaukset</label>
+            <div class="tab" id="tab-leimausform">
+              <form>Täällä voi joukkue muokata rastileimauksiaan</form>
+            </div>
+          </section>
+
+          <!-- <section>
+        <input type="radio" name="tabs" id="leimaukset" checked="checked" />
+        <label for="leimaukset">Rastileimaukset</label>
+        <div class="tab" id="tab-leimausform">
+          <form>Täällä voi joukkue muokata rastileimauksiaan</form>
+        </div>
+      </section> -->
+        </div>
+      </section>
+    </main>
+  </body>
 </html>
-
-

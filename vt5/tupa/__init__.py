@@ -1,7 +1,10 @@
 import os
+import firebase_admin
+from firebase_admin import firestore
 from flask import Flask, render_template
 from flask.helpers import make_response
 
+default_app = firebase_admin.initialize_app()
 
 def create_app():
     app = Flask(__name__)
@@ -18,6 +21,10 @@ def create_app():
     # from tupa.modules.services.auth import oauth, authService
     # oauth.init_app(app)
     # authService.init_app(app)
+
+    from tupa.blueprints import auth, init_db
+    app.register_blueprint(auth.bp)
+    app.register_blueprint(init_db.bp)
 
     @app.route('/', methods=["GET"])
     def index():
