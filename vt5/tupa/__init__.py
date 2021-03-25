@@ -22,9 +22,10 @@ def create_app():
     # oauth.init_app(app)
     # authService.init_app(app)
 
-    from tupa.blueprints import auth, init_db
+    from tupa.blueprints import auth, init_db, db
     app.register_blueprint(auth.bp)
     app.register_blueprint(init_db.bp)
+    app.register_blueprint(db.bp)
 
     @app.route('/', methods=["GET"])
     def index():
