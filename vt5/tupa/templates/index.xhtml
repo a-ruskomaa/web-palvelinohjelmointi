@@ -27,17 +27,12 @@
 
     <button id="login-button">Login</button>
     <button id="logout-button">Logout</button>
-    <button id="server-button">Call server</button>
 
     <section id="section-kilpailu" hidden="hidden">
       <div id="kilpailu-content">
         <!-- Tällä voi vaihtaa milloin tahansa valittua kilpailua -->
         <label for="kilpailu">Valitse kilpailu</label>
         <select name="kilpailu">
-          <!-- <option>Kilpailu 1</option>
-        <option>Kilpailu 2</option>
-        <option>Kilpailu 3</option>
-        <option>Kilpailu 4</option> -->
         </select>
       </div>
     </section>
@@ -55,14 +50,14 @@
             />
             <label class="tab-label" for="joukkue">Joukkue </label>
             <div class="tab" id="tab-joukkueform">
-              <form class="joukkueform">
+              <form class="joukkueform" id ="joukkueform">
                 <fieldset>
 
                   <div class="clear">
-                    <label for="jasenform-nimi">Nimi</label>
+                    <label for="joukkueform-nimi">Nimi</label>
                     <div class="input-container">
                       <input
-                        id="jasenform-nimi"
+                        id="joukkueform-nimi"
                         name="nimi"
                         required="required"
                         type="text"
@@ -72,15 +67,15 @@
                   </div>
 
                   <div class="clear">
-                    <label for="jasenform-sarjat">Sarja</label>
-                    <div class="input-container" id="jasenform-sarjat">
+                    <label for="joukkueform-sarjat">Sarja</label>
+                    <div class="input-container" id="joukkueform-sarjat">
                     </div>
                   </div>
 
                   <div class="clear">
-                    <label for="jasenform-jasenet">Jäsenet</label>
+                    <label for="joukkueform-jasenet">Jäsenet</label>
                     <div class="input-container">
-                      <ul id="jasenform-jasenet">
+                      <ul id="joukkueform-jasenet">
                         <li>
                           <label for="jasen-0">Jäsen 1</label>
                           <input

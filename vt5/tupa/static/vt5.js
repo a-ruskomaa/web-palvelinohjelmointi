@@ -14,6 +14,7 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 
+const BASE_URL = window.location.href;
 const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
 
@@ -30,91 +31,141 @@ function handleAuthStateChanged(user) {
 }
 
 async function showKilpailut() {
-    const section_kilpailu = document.getElementById("section-kilpailu");
-    const kilpailu_select = section_kilpailu.querySelector(
+    const sectionKilpailu = document.getElementById("section-kilpailu");
+    const kilpailuSelect = sectionKilpailu.querySelector(
         'select[name="kilpailu"]'
     );
 
-    let kilpailut_ref = await db.collection("kilpailut");
-    let kilpailut = await kilpailut_ref.get();
+    let kilpailutRef = await db.collection("kilpailut");
+    let kilpailut = await kilpailutRef.get();
 
     kilpailut.forEach((kilpailu) => {
-        // console.log('kilpailu', kilpailu);
-        // console.log('kilpailu', kilpailu.data());
-        // console.log('sarjat', kilpailu.ref.collection('sarjat').get());
         const option = document.createElement("option");
         option.value = kilpailu.id;
         option.text = kilpailu.id;
-        kilpailu_select.add(option);
+        kilpailuSelect.add(option);
     });
 
-    kilpailu_select.addEventListener("input", handleKilpailuChange);
-    section_kilpailu.removeAttribute("hidden");
+    kilpailuSelect.addEventListener("input", handleKilpailunVaihto);
+    paivitaKilpailunTiedot(haeValittuKilpailu())
+    sectionKilpailu.removeAttribute("hidden");
 }
 
 function hideKilpailut() {
-    const section_kilpailu = document.getElementById("section-kilpailu");
-    const kilpailu_select = section.querySelector('select[name="kilpailu"]');
+    const sectionKilpailu = document.getElementById("section-kilpailu");
+    const kilpailuSelect = section.querySelector('select[name="kilpailu"]');
 
-    while (kilpailu_select.childElementCount > 0) {
-        kilpailu_select.removeChild(kilpailu_select.firstChild);
+    while (kilpailuSelect.childElementCount > 0) {
+        kilpailuSelect.removeChild(kilpailuSelect.firstChild);
     }
 
-    section_kilpailu.setAttribute("hidden", "hidden");
+    sectionKilpailu.setAttribute("hidden", "hidden");
 }
 
 function showTabs() {
-    const section_tabs = document.getElementById("section-tabs");
+    const sectionTabs = document.getElementById("section-tabs");
 
-    section_tabs.removeAttribute("hidden");
+    sectionTabs.removeAttribute("hidden");
 }
 
 function hideTabs() {
-    const section_tabs = document.getElementById("section-tabs");
+    const sectionTabs = document.getElementById("section-tabs");
 
-    section_tabs.setAttribute("hidden", "hidden");
+    sectionTabs.setAttribute("hidden", "hidden");
 }
 
-function populateJoukkuelista(snapshot) {
+function luoJoukkuelista(sarjat) {
+    console.log(sarjat)
     const joukkuelista = document.getElementById("joukkuelista");
     const vanhalista = joukkuelista.querySelector("ul");
     if (vanhalista) {
         joukkuelista.removeChild(vanhalista);
     }
 
-    const uusilista = document.createElement("ul");
+    const ulSarjat = document.createElement("ul");
 
-    snapshot.forEach(async (sarja) => {
-        console.log("sarja", sarja);
+    Object.entries(sarjat).forEach(([nimi, sarja]) => {
+        console.log("sarja", nimi, sarja);
         const li = document.createElement("li");
-        li.textContent = sarja.id;
+        li.textContent = nimi;
 
-        const ul = document.createElement("ul");
-        const joukkueet = await sarja.ref.collection("joukkueet").get();
+        const joukkueet = sarja.joukkueet;
         console.log("joukkueet", joukkueet);
-        joukkueet.forEach((joukkue) => {
-            const li = document.createElement("li");
-            li.textContent = joukkue.data().nimi;
-            // TODO tähän joukkueen jäsenet
-            ul.appendChild(li);
-        });
-        uusilista.appendChild(li);
+        if (joukkueet) {
+            const ulJoukkueet = document.createElement("ul");
+            Object.entries(joukkueet).forEach(([joukkueId, joukkue]) => {
+                const li = document.createElement("li");
+                li.textContent = joukkue.nimi;
+
+                const jasenet = joukkue.jasenet
+                if (jasenet) {
+                    const ulJasenet = document.createElement("ul");
+                    jasenet.forEach((jasen) => {
+                        console.log('jasen', jasen)
+                        const li = document.createElement("li");
+                        li.textContent = jasen;
+                        ulJasenet.appendChild(li)
+                    })
+                    li.appendChild(ulJasenet)
+                }
+                ulJoukkueet.appendChild(li);
+            });
+            li.appendChild(ulJoukkueet)
+        }
+
+        ulSarjat.appendChild(li);
     });
 
-    joukkuelista.appendChild(uusilista);
+    joukkuelista.appendChild(ulSarjat);
 }
 
-function handleKilpailuChange() {
-    const section_kilpailu = document.getElementById("section-kilpailu");
-    const kilpailu_select = section_kilpailu.querySelector(
+function handleKilpailunVaihto(event) {
+    const valittuKilpailu = event.target.value
+    paivitaKilpailunTiedot(valittuKilpailu)
+}
+
+function paivitaKilpailunTiedot(kilpailu) {
+
+    const sarjat = haeSarjat(kilpailu).then((sarjat) =>
+    {
+        lisaaSarjatLomakkeelle(sarjat)
+        luoJoukkuelista(sarjat)
+    }).catch((error) => console.log(error))
+}
+
+function haeValittuKilpailu() {
+    const sectionKilpailu = document.getElementById("section-kilpailu");
+    const kilpailuSelect = sectionKilpailu.querySelector(
         'select[name="kilpailu"]'
     );
-    const valittu_kilpailu = kilpailu_select.value;
+    return kilpailuSelect.value;
+}
 
-    db.collection("kilpailut")
-        .doc(valittu_kilpailu)
-        .collection("sarjat")
-        .onSnapshot(populateJoukkuelista);
+async function handleJoukkueFormSubmit(event) {
+    event.preventDefault();
+    let formdata = new FormData(event.target);
+    const nimi = formdata.get('nimi')
+    const sarja = formdata.get('sarja')
+    const jasenet = formdata.getAll('jasen').filter(jasen => jasen !== '')
+    const lisaaja = firebase.auth().currentUser.email
+
+    const joukkue = {
+        nimi,
+        sarja,
+        jasenet,
+        lisaaja
+    }
+
+    const valittuKilpailu = haeValittuKilpailu()
+
+    console.log(joukkue)
+    try{
+        await db.collection(`kilpailut/${valittuKilpailu}/sarjat/${sarja}/joukkueet`).add(joukkue)
+        const sarjat = await haeSarjat(valittuKilpailu)
+        luoJoukkuelista(sarjat)
+    } catch(error) {
+        console.log(error)
+    }
 }
 
 function signIn() {
@@ -146,41 +197,65 @@ function signIn() {
         });
 }
 
+function lisaaSarjatLomakkeelle(sarjat) {
+    const joukkueformSarjat = document.getElementById("joukkueform-sarjat");
+
+    joukkueformSarjat.querySelectorAll("input, label")
+                        .forEach((sarja) => {
+        joukkueformSarjat.removeChild(sarja)
+    })
+
+    Object.entries(sarjat).forEach(([id, _]) => {
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "sarja";
+        radio.value = id
+        radio.id = `joukkueform-sarjat-${id}`
+        const label = document.createElement('label')
+        label.setAttribute('for', radio.id)
+        label.textContent = id
+        joukkueformSarjat.appendChild(radio);
+        joukkueformSarjat.appendChild(label)
+    })
+}
+
+async function haeSarjat(kilpailuId) {
+    try {
+        let user = firebase.auth().currentUser;
+        let idToken = await user.getIdToken();
+
+        const res = await fetch(`${BASE_URL}/kilpailut/${kilpailuId}/sarjat`, {
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + idToken,
+            },
+        });
+        return await res.json();
+    } catch (err) {
+        console.log(err);
+    }
+}
+
 window.onload = () => {
     console.log("Window loaded");
 
-    let login_button = document.getElementById("login-button");
-    let logout_button = document.getElementById("logout-button");
-    let server_button = document.getElementById("server-button");
+    let loginButton = document.getElementById("login-button");
+    let logoutButton = document.getElementById("logout-button");
 
-    login_button.onclick = signIn;
+    let joukkueForm = document.getElementById("joukkueform");
 
-    logout_button.onclick = () => {
+    joukkueForm.onsubmit = handleJoukkueFormSubmit;
+
+    loginButton.onclick = signIn;
+
+    logoutButton.onclick = () => {
         firebase.auth().signOut();
-    };
-
-    server_button.onclick = async () => {
-        let user = firebase.auth().currentUser;
-        let id_token = await user.getIdToken();
-        console.log(id_token);
-
-        fetch("http://localhost:5000/auth_test", {
-            method: "GET",
-            headers: {
-                Authorization: "Bearer " + id_token,
-            },
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                console.log(data);
-            })
-            .catch((err) => {
-                console.log(err);
-            });
     };
 
     firebase.auth().onAuthStateChanged(handleAuthStateChanged);
 
+    // const sarjat 
+    
     if (firebase.auth().currentUser) {
         console.log("Showing hidden content");
         showKilpailut();

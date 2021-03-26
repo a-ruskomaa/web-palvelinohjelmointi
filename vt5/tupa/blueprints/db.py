@@ -23,10 +23,16 @@ def get_kilpailu_sarjat(kilpailu_id: str):
 
     sarjat_dict = {}
 
-    sarjat = db.collection(f"kilpailut/{kilpailu_id}/sarjat").stream()
+    sarjat_path = f"kilpailut/{kilpailu_id}/sarjat"
+
+    sarjat = db.collection(sarjat_path).stream()
 
     for sarja in sarjat:
         sarjat_dict[sarja.id] = sarja.to_dict()
+        sarjat_dict[sarja.id]['joukkueet'] = {}
+        joukkueet = db.collection(f"{sarjat_path}/{sarja.id}/joukkueet").stream()
+        for joukkue in joukkueet:
+            sarjat_dict[sarja.id]['joukkueet'].update({joukkue.id: joukkue.to_dict()})
 
 
     return make_response(sarjat_dict, 200)
