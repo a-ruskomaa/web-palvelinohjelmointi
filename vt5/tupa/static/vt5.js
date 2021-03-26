@@ -18,6 +18,8 @@ const BASE_URL = window.location.href;
 const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
 
+
+// Tapahtumankäsittelijät
 function handleAuthStateChanged(user) {
     if (user) {
         console.log(`user ${user.email} is signed in`);
@@ -30,6 +32,69 @@ function handleAuthStateChanged(user) {
     }
 }
 
+function handleKilpailunVaihto(event) {
+    const valittuKilpailu = event.target.value
+    paivitaKilpailunTiedot(valittuKilpailu)
+}
+
+async function handleJoukkueFormSubmit(event) {
+    event.preventDefault();
+    let formdata = new FormData(event.target);
+    const nimi = formdata.get('nimi')
+    const sarja = formdata.get('sarja')
+    const jasenet = formdata.getAll('jasen').filter(jasen => jasen !== '')
+    const lisaaja = firebase.auth().currentUser.email
+
+    const joukkue = {
+        nimi,
+        sarja,
+        jasenet,
+        lisaaja
+    }
+
+    const valittuKilpailu = haeValittuKilpailu()
+
+    console.log(joukkue)
+    try{
+        await lisaaJoukkue(joukkue)
+        const sarjat = await haeSarjat(valittuKilpailu)
+        luoJoukkuelista(sarjat)
+    } catch(error) {
+        console.log(error)
+    }
+}
+
+function signIn() {
+    firebase
+        .auth()
+        .signInWithPopup(provider)
+        .then((result) => {
+            /** @type {firebase.auth.OAuthCredential} */
+            var credential = result.credential;
+            console.log(credential);
+
+            // This gives you a Google Access Token. You can use it to access the Google API.
+            var token = credential.accessToken;
+            // The signed-in user info.
+            var user = result.user;
+            console.log(user);
+            // ...
+        })
+        .catch((error) => {
+            console.log(error);
+            // Handle Errors here.
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            // The email of the user's account used.
+            var email = error.email;
+            // The firebase.auth.AuthCredential type that was used.
+            var credential = error.credential;
+            // ...
+        });
+}
+
+
+// Sivun osien näyttäminen
 async function showKilpailut() {
     const sectionKilpailu = document.getElementById("section-kilpailu");
     const kilpailuSelect = sectionKilpailu.querySelector(
@@ -53,7 +118,7 @@ async function showKilpailut() {
 
 function hideKilpailut() {
     const sectionKilpailu = document.getElementById("section-kilpailu");
-    const kilpailuSelect = section.querySelector('select[name="kilpailu"]');
+    const kilpailuSelect = sectionKilpailu.querySelector('select[name="kilpailu"]');
 
     while (kilpailuSelect.childElementCount > 0) {
         kilpailuSelect.removeChild(kilpailuSelect.firstChild);
@@ -74,6 +139,7 @@ function hideTabs() {
     sectionTabs.setAttribute("hidden", "hidden");
 }
 
+// Tietojen lisääminen sivulle
 function luoJoukkuelista(sarjat) {
     console.log(sarjat)
     const joukkuelista = document.getElementById("joukkuelista");
@@ -119,84 +185,6 @@ function luoJoukkuelista(sarjat) {
     joukkuelista.appendChild(ulSarjat);
 }
 
-function handleKilpailunVaihto(event) {
-    const valittuKilpailu = event.target.value
-    paivitaKilpailunTiedot(valittuKilpailu)
-}
-
-function paivitaKilpailunTiedot(kilpailu) {
-
-    const sarjat = haeSarjat(kilpailu).then((sarjat) =>
-    {
-        lisaaSarjatLomakkeelle(sarjat)
-        luoJoukkuelista(sarjat)
-    }).catch((error) => console.log(error))
-}
-
-function haeValittuKilpailu() {
-    const sectionKilpailu = document.getElementById("section-kilpailu");
-    const kilpailuSelect = sectionKilpailu.querySelector(
-        'select[name="kilpailu"]'
-    );
-    return kilpailuSelect.value;
-}
-
-async function handleJoukkueFormSubmit(event) {
-    event.preventDefault();
-    let formdata = new FormData(event.target);
-    const nimi = formdata.get('nimi')
-    const sarja = formdata.get('sarja')
-    const jasenet = formdata.getAll('jasen').filter(jasen => jasen !== '')
-    const lisaaja = firebase.auth().currentUser.email
-
-    const joukkue = {
-        nimi,
-        sarja,
-        jasenet,
-        lisaaja
-    }
-
-    const valittuKilpailu = haeValittuKilpailu()
-
-    console.log(joukkue)
-    try{
-        await db.collection(`kilpailut/${valittuKilpailu}/sarjat/${sarja}/joukkueet`).add(joukkue)
-        const sarjat = await haeSarjat(valittuKilpailu)
-        luoJoukkuelista(sarjat)
-    } catch(error) {
-        console.log(error)
-    }
-}
-
-function signIn() {
-    firebase
-        .auth()
-        .signInWithPopup(provider)
-        .then((result) => {
-            /** @type {firebase.auth.OAuthCredential} */
-            var credential = result.credential;
-            console.log(credential);
-
-            // This gives you a Google Access Token. You can use it to access the Google API.
-            var token = credential.accessToken;
-            // The signed-in user info.
-            var user = result.user;
-            console.log(user);
-            // ...
-        })
-        .catch((error) => {
-            console.log(error);
-            // Handle Errors here.
-            var errorCode = error.code;
-            var errorMessage = error.message;
-            // The email of the user's account used.
-            var email = error.email;
-            // The firebase.auth.AuthCredential type that was used.
-            var credential = error.credential;
-            // ...
-        });
-}
-
 function lisaaSarjatLomakkeelle(sarjat) {
     const joukkueformSarjat = document.getElementById("joukkueform-sarjat");
 
@@ -219,6 +207,24 @@ function lisaaSarjatLomakkeelle(sarjat) {
     })
 }
 
+function paivitaKilpailunTiedot(kilpailu) {
+
+    const sarjat = haeSarjat(kilpailu).then((sarjat) =>
+    {
+        lisaaSarjatLomakkeelle(sarjat)
+        luoJoukkuelista(sarjat)
+    }).catch((error) => console.log(error))
+}
+
+function haeValittuKilpailu() {
+    const sectionKilpailu = document.getElementById("section-kilpailu");
+    const kilpailuSelect = sectionKilpailu.querySelector(
+        'select[name="kilpailu"]'
+    );
+    return kilpailuSelect.value;
+}
+
+// Tietokantakutsut
 async function haeSarjat(kilpailuId) {
     try {
         let user = firebase.auth().currentUser;
@@ -234,6 +240,10 @@ async function haeSarjat(kilpailuId) {
     } catch (err) {
         console.log(err);
     }
+}
+
+async function lisaaJoukkue(joukkue) {
+    await db.collection(`kilpailut/${valittuKilpailu}/sarjat/${sarja}/joukkueet`).add(joukkue)
 }
 
 window.onload = () => {

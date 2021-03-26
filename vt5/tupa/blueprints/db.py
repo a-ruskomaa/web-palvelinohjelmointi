@@ -17,7 +17,7 @@ def get_kilpailu(kilpailu_id: str):
 
 
 @bp.route('/kilpailut/<kilpailu_id>/sarjat', methods=['GET'])
-# @auth_required
+@auth_required
 def get_kilpailu_sarjat(kilpailu_id: str):
     db = firestore.client()
 
