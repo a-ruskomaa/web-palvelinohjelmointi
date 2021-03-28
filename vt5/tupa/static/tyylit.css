@@ -49,3 +49,12 @@ body {
 .hidden {
   display: none;
 }
+
+.joukkue-nimi {
+  color: blue;
+  cursor: pointer;
+}
+
+.joukkue-nimi:hover {
+  text-decoration: underline;
+}
