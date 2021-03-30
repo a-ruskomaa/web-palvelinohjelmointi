@@ -18,114 +18,6 @@ const BASE_URL = window.location.href;
 const db = firebase.firestore();
 const provider = new firebase.auth.GoogleAuthProvider();
 
-// Tapahtumankäsittelijät
-function handleAuthStateChanged(user) {
-    if (user) {
-        console.log(`user ${user.email} is signed in`);
-        naytaKilpailut();
-        naytaTabit();
-    } else {
-        console.log("user logged out");
-        piilotaKilpailut();
-        piilotaTabit();
-    }
-}
-
-function handleKilpailunVaihto(event) {
-    const valittuKilpailu = event.target.value;
-    paivitaKilpailunTiedot(valittuKilpailu);
-}
-
-async function handleJoukkueFormSubmit(event) {
-    event.preventDefault();
-    const lomake = event.target;
-    const formdata = new FormData(lomake);
-    const joukkue = muodostaJoukkue(formdata);
-    console.log(joukkue);
-    await tarkistaLomake(lomake, joukkue);
-
-    if (!lomake.reportValidity()) {
-        console.log("not valid")
-        return;
-    }
-
-    try {
-        await lisaaJoukkue(joukkue);
-        lomake.reset();
-        const sarjat = await haeSarjat(joukkue.kilpailu);
-        luoJoukkuelista(sarjat);
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-function muodostaJoukkue(formdata) {
-    const nimi = formdata.get("nimi").trim();
-    const sarja = formdata.get("sarja");
-    const kilpailu = valittuKilpailu();
-    const jasenet = formdata.getAll("jasen").filter((j) => j.trim() !== "").map((j) => j.trim());
-    const lisaaja = firebase.auth().currentUser.email;
-
-    return {
-        nimi,
-        sarja,
-        kilpailu,
-        jasenet,
-        lisaaja,
-    };
-}
-
-function tarkistaNimi(event) {
-    if (event.target.value != "") {
-        nimiInput.setCustomValidity("");
-    }
-}
-
-function tarkistaJasenenNimi(event) {
-    const jasenInput = event.target;
-
-    jasenInput.setCustomValidity("");
-
-    if (jasenInput.value.match(/\d/)) {
-        jasenInput.setCustomValidity("Jäsenen nimessä ei saa olla numeroita");
-    } else if (jasenInput.value != '' && jasenInput.value.trim() == '') {
-        jasenInput.setCustomValidity("Jäsenen nimi ei voi olla tyhjä");
-    }
-}
-
-async function tarkistaLomake(lomake, joukkue) {
-    console.log("tarkistetaan lomake...");
-    const idInput = lomake.querySelector('input[name="id"]');
-    const nimiInput = lomake.querySelector('input[name="nimi"]');
-    const sarjaInput = lomake.querySelector('input[name="sarja"]');
-    const jasenInputs = lomake.querySelectorAll('input[name="jasen"]');
-    console.log(jasenInputs)
-    const nimi = "nimi"
-    
-    try {
-        const joukkueet = await haeJoukkueetRajauksella('kilpailu', valittuKilpailu())
-    
-        nimiInput.setCustomValidity("");
-        joukkueet.forEach((joukkue) => {
-            console.log(joukkue.data().nimi.trim())
-            if (joukkue.data().nimi.toLowerCase() == nimiInput.value.trim().toLowerCase() && joukkue.id != idInput.value) {
-                nimiInput.setCustomValidity("Kilpailussa on jo samanniminen joukkue!");
-            }
-        })
-    } catch (e) {
-        console.log(e)
-    }
-
-    if (joukkue.jasenet.length < 2 || joukkue.jasenet.length > 5) {
-        const ekaTyhja = Array.from(jasenInputs).find((jasenInput) => {
-            console.log(jasenInput);
-            
-            return jasenInput.value.trim() == ''
-        })
-        ekaTyhja.setCustomValidity("Anna 2-5 jäsentä!");
-    }
-}
-
 function signIn() {
     firebase
         .auth()
@@ -155,61 +47,76 @@ function signIn() {
         });
 }
 
-// Sivun osien näyttäminen
-async function naytaKilpailut() {
-    const sectionKilpailu = document.getElementById("section-kilpailu");
-    const kilpailuSelect = sectionKilpailu.querySelector(
-        'select[name="kilpailu"]'
-    );
+// tila
+var valittuKilpailu = null;
 
-    let kilpailutRef = await db.collection("kilpailut");
-    let kilpailut = await kilpailutRef.get();
+// Tapahtumankäsittelijät
+function handleAuthStateChanged(user) {
+    if (user) {
+        console.log(`user ${user.email} is signed in`);
+        naytaKilpailut();
+        naytaTabit();
+        loginButton.setAttribute("hidden", "hidden");
+        logoutButton.removeAttribute("hidden");
+    } else {
+        console.log("user logged out");
+        piilotaKilpailut();
+        piilotaTabit();
+        logoutButton.setAttribute("hidden", "hidden");
+        loginButton.removeAttribute("hidden");
+    }
+}
 
-    let lahin = null
-    let timedelta = null
-    kilpailut.forEach((kilpailu) => {
-        const currentTimedelta = Math.abs(Date.parse(kilpailu.data().alkuaika) - Date.now())
-        console.log(currentTimedelta)
-        if (!lahin || currentTimedelta < timedelta) {
-            lahin = kilpailu;
-            timedelta = currentTimedelta;
-        }
-        const option = document.createElement("option");
-        option.value = kilpailu.id;
-        option.text = kilpailu.id;
-        kilpailuSelect.add(option);
+async function handleJoukkueSelect(event) {
+    const joukkueId = event.target.joukkueId;
+    const joukkue = await haeJoukkueIdlla(joukkueId);
+
+    console.log(joukkue);
+
+    alustaJoukkueLomake();
+    taytaJoukkueLomake(joukkue);
+    naytaPoistoNappi();
+
+    const tabJoukkue = document.getElementById("joukkue");
+    tabJoukkue.checked = true;
+}
+
+async function handleKilpailunVaihto(event) {
+    const kilpailu = event.target.value;
+    window.valittuKilpailu = kilpailu;
+    vaihdaOtsikko(kilpailu);
+    const sarjat = await haeSarjat(kilpailu);
+    luoJoukkuelista(sarjat);
+    lisaaSarjatLomakkeelle(sarjat);
+
+    esitaytaLomakkeet(kilpailu);
+}
+
+async function esitaytaLomakkeet(kilpailu) {
+    const kayttajanJoukkueet = await haeJoukkueetRajauksilla({
+        lisaaja: firebase.auth().currentUser.email,
     });
 
-    //TODO valitse lähin
+    alustaJoukkueLomake();
 
-    kilpailuSelect.addEventListener("input", handleKilpailunVaihto);
-    paivitaKilpailunTiedot(valittuKilpailu());
-    sectionKilpailu.removeAttribute("hidden");
-}
+    if (kayttajanJoukkueet.some((j) => j.kilpailu == kilpailu)) {
+        naytaLeimaukset();
+        lisaaLeimausInputit();
+    } else {
+        piilotaLeimaukset();
 
-function piilotaKilpailut() {
-    const sectionKilpailu = document.getElementById("section-kilpailu");
-    const kilpailuSelect = sectionKilpailu.querySelector(
-        'select[name="kilpailu"]'
-    );
-
-    while (kilpailuSelect.childElementCount > 0) {
-        kilpailuSelect.removeChild(kilpailuSelect.firstChild);
+        if (kayttajanJoukkueet.length > 0) {
+            console.log("ei joukkueita kilpailussa");
+            const joukkue = kayttajanJoukkueet[0];
+            joukkue.id = -1;
+            taytaJoukkueLomake(joukkue);
+        }
     }
-
-    sectionKilpailu.setAttribute("hidden", "hidden");
 }
 
-function naytaTabit() {
-    const sectionTabs = document.getElementById("section-tabs");
-
-    sectionTabs.removeAttribute("hidden");
-}
-
-function piilotaTabit() {
-    const sectionTabs = document.getElementById("section-tabs");
-
-    sectionTabs.setAttribute("hidden", "hidden");
+function vaihdaOtsikko(kilpailu) {
+    const heading = document.querySelector("h1");
+    heading.textContent = kilpailu;
 }
 
 // Tietojen lisääminen sivulle
@@ -230,6 +137,7 @@ function luoJoukkuelista(sarjat) {
 
         const joukkueet = sarja.joukkueet;
         console.log("joukkueet", joukkueet);
+
         if (joukkueet) {
             const ulJoukkueet = document.createElement("ul");
             Object.entries(joukkueet).forEach(([joukkueId, joukkue]) => {
@@ -238,11 +146,7 @@ function luoJoukkuelista(sarjat) {
                 span.textContent = joukkue.nimi;
                 span.classList.add("joukkue-nimi");
                 span.joukkueId = joukkueId;
-                span.addEventListener("click", (e) => {
-                    console.log(e.target.joukkueId);
-                    const tabJoukkue = document.getElementById("joukkue");
-                    tabJoukkue.checked = true;
-                });
+                span.addEventListener("click", handleJoukkueSelect);
                 li.appendChild(span);
 
                 const jasenet = joukkue.jasenet;
@@ -279,7 +183,7 @@ function lisaaSarjatLomakkeelle(sarjat) {
         radio.name = "sarja";
         radio.value = id;
         radio.id = `joukkueform-sarjat-${id}`;
-        radio.setAttribute('required', 'required')
+        radio.setAttribute("required", "required");
         if (i === 0) {
             radio.checked = true;
         }
@@ -291,28 +195,364 @@ function lisaaSarjatLomakkeelle(sarjat) {
     });
 }
 
-function paivitaKilpailunTiedot(kilpailu) {
-    const sarjat = haeSarjat(kilpailu)
-        .then((sarjat) => {
-            lisaaSarjatLomakkeelle(sarjat);
-            luoJoukkuelista(sarjat);
-        })
-        .catch((error) => console.log(error));
+async function kasitteleJoukkuelomakkeenLahetys(event) {
+    event.preventDefault();
+    const lomake = event.target;
+    const formdata = new FormData(lomake);
+    console.log("formdata", formdata);
+    const errorMsg = document.getElementById("joukkueform-error-msg");
+    errorMsg.textContent = "";
+
+    try {
+        const joukkue = muodostaJoukkue(formdata);
+        if (
+            formdata.get("poista") &&
+            window.confirm(
+                `Haluatko varmasti poistaa joukkueen ${formdata.get("nimi")}?`
+            )
+        ) {
+            await poistaJoukkue(formdata.get("id"));
+        } else {
+            await tarkistaLomake(lomake, joukkue);
+
+            if (!lomake.reportValidity()) {
+                return;
+            }
+
+            if (joukkue.id == -1) {
+                const kayttajanJoukkueet = await haeJoukkueetRajauksilla({
+                    kilpailu: joukkue.kilpailu,
+                    lisaaja: firebase.auth().currentUser.email,
+                });
+
+                if (kayttajanJoukkueet.length > 0) {
+                    throw new Error("Voit lisätä vain yhden joukkueen!");
+                }
+
+                console.log("kayttajan joukkueet", kayttajanJoukkueet);
+
+                await lisaaJoukkue(joukkue);
+            } else {
+                await tallennaMuokattuJoukkue(joukkue);
+            }
+        }
+
+        const sarjat = await haeSarjat(joukkue.kilpailu);
+        luoJoukkuelista(sarjat);
+        esitaytaLomakkeet(joukkue.kilpailu);
+    } catch (error) {
+        console.log(error.message);
+        errorMsg.textContent = `Tallennuksessa tapahtui virhe:\n${error.message}`;
+    }
 }
 
-function valittuKilpailu() {
+async function lisaaLeimausInputit() {
+    const rastit = await haeRastit(window.valittuKilpailu);
+    const leimausForm = document.getElementById("leimausform");
+    console.log("rastit", rastit);
+
+    const kayttajanJoukkueet = await haeJoukkueetRajauksilla({
+        kilpailu: window.valittuKilpailu,
+        lisaaja: firebase.auth().currentUser.email,
+    });
+
+    const joukkueKilpailussa =
+        kayttajanJoukkueet.length > 0 ? kayttajanJoukkueet[0] : null;
+
+    const joukkueenLeimaukset = await haeJoukkueenLeimaukset(
+        joukkueKilpailussa.id
+    );
+
+    joukkueenLeimaukset.forEach((leimaus) => {
+        const leimausDiv = luoLeimausInput(luoRastiOptiot());
+        leimausDiv.leimausId = leimaus.id;
+        leimausDiv.aikaleima.value = leimaus.aika;
+        leimausDiv.rastiSelect.value = leimaus.rasti;
+        leimausDiv.muokattu = false;
+        leimausDiv.uusi = false;
+        leimausDiv.addEventListener("change", handleLeimausChange);
+        leimausForm.appendChild(leimausDiv);
+    });
+
+    const uusiKentta = luoUusiLeimausInput();
+    leimausForm.appendChild(uusiKentta);
+
+    function luoRastiOptiot() {
+        return rastit.map((rasti) => {
+            const option = document.createElement("option");
+            option.value = rasti.id;
+            option.text = rasti.koodi;
+            return option;
+        });
+    }
+
+    function luoUusiLeimausInput() {
+        const leimausDiv = luoLeimausInput(luoRastiOptiot());
+        leimausDiv.uusi = true;
+        leimausDiv.muokattu = false;
+        leimausDiv.addEventListener("change", handleLeimausChange);
+        return leimausDiv;
+    }
+
+    function handleLeimausChange(event) {
+        const leimausDiv = event.currentTarget;
+
+        if (leimausDiv.uusi && !leimausDiv.muokattu) {
+            const uusiKentta = luoUusiLeimausInput();
+            leimausForm.appendChild(uusiKentta);
+        }
+        leimausDiv.muokattu = true;
+    }
+
+    function luoLeimausInput(rastiOptiot) {
+        const div = document.createElement("div");
+        const aikaleima = document.createElement("input");
+        aikaleima.type = "text";
+
+        const rastiSelect = document.createElement("select");
+
+        rastiOptiot.forEach((option) => {
+            rastiSelect.add(option);
+        });
+
+        const poistoCheckbox = document.createElement("input");
+        poistoCheckbox.type = "checkbox";
+
+        div.appendChild(aikaleima);
+        div.aikaleima = aikaleima;
+        div.appendChild(rastiSelect);
+        div.rastiSelect = rastiSelect;
+        div.appendChild(poistoCheckbox);
+        div.poistoCheckbox = poistoCheckbox;
+
+        return div;
+    }
+}
+
+function kasitteleLeimausLomakkeenLahetys(event) {
+    event.preventDefault();
+    const leimausForm = event.target;
+
+    const leimausInputit = leimausForm.childNodes
+
+    const muokatutLeimaukset = []
+    const uudetLeimaukset = []
+
+}
+
+function tarkistaAikaleima(event) {
+    
+}
+
+function taytaJoukkueLomake(joukkue) {
+    const lomake = document.getElementById("joukkueform");
+    const idInput = lomake.querySelector('input[name="id"]');
+    const nimiInput = lomake.querySelector('input[name="nimi"]');
+    const sarjaInput = lomake.querySelectorAll('input[name="sarja"]');
+    const jasenInputs = lomake.querySelectorAll('input[name="jasen"]');
+
+    idInput.value = joukkue.id;
+    nimiInput.value = joukkue.nimi;
+
+    sarjaInput.forEach((sarjaInput) => {
+        if (joukkue.sarja == sarjaInput.value) {
+            sarjaInput.checked = true;
+        }
+    });
+
+    joukkue.jasenet.forEach((jasen, i) => {
+        jasenInputs[i].value = jasen;
+    });
+}
+
+function alustaJoukkueLomake() {
+    const lomake = document.getElementById("joukkueform");
+    const errorMsg = document.getElementById("joukkueform-error-msg");
+    errorMsg.textContent = "";
+    lomake.reset();
+    const sarjaInput = lomake.querySelectorAll('input[name="sarja"]');
+    if (sarjaInput.length > 0) {
+        sarjaInput[0].checked = true;
+    }
+}
+
+/**
+ *
+ * @param {FormData} formdata
+ * @returns
+ */
+function muodostaJoukkue(formdata) {
+    const id = formdata.get("id");
+    const nimi = formdata.get("nimi").trim();
+    const sarja = formdata.get("sarja");
+    const kilpailu = window.valittuKilpailu;
+    const jasenet = formdata
+        .getAll("jasen")
+        .filter((j) => j.trim() !== "")
+        .map((j) => j.trim())
+        .sort((a, b) => a.localeCompare(b));
+    const lisaaja = firebase.auth().currentUser.email;
+
+    return {
+        id,
+        nimi,
+        sarja,
+        kilpailu,
+        jasenet,
+        lisaaja,
+    };
+}
+
+function tarkistaNimi(event) {
+    if (event.target.value != "") {
+        nimiInput.setCustomValidity("");
+    }
+}
+
+function tarkistaJasenenNimi(event) {
+    const jasenInput = event.target;
+
+    jasenInput.setCustomValidity("");
+
+    if (jasenInput.value.match(/\d/)) {
+        jasenInput.setCustomValidity("Jäsenen nimessä ei saa olla numeroita");
+    } else if (jasenInput.value != "" && jasenInput.value.trim() == "") {
+        jasenInput.setCustomValidity("Jäsenen nimi ei voi olla tyhjä");
+    }
+}
+
+async function tarkistaLomake(lomake, joukkue) {
+    console.log("tarkistetaan lomake...");
+    const idInput = lomake.querySelector('input[name="id"]');
+    const nimiInput = lomake.querySelector('input[name="nimi"]');
+    const sarjaInput = lomake.querySelectorAll('input[name="sarja"]');
+    const jasenInputs = lomake.querySelectorAll('input[name="jasen"]');
+    console.log("jaseninputs", jasenInputs);
+    const nimi = "nimi";
+
+    try {
+        const kilpailunJoukkueet = await haeJoukkueetRajauksilla({
+            kilpailu: window.valittuKilpailu,
+        });
+
+        console.log("kilpailun joukkueet", kilpailunJoukkueet);
+        console.log(nimiInput.value.trim().toLowerCase());
+
+        nimiInput.setCustomValidity("");
+        if (
+            kilpailunJoukkueet.some((joukkue) => {
+                return (
+                    joukkue.nimi.toLowerCase() ==
+                        nimiInput.value.trim().toLowerCase() &&
+                    joukkue.id != idInput.value
+                );
+            })
+        ) {
+            nimiInput.setCustomValidity(
+                "Kilpailussa on jo samanniminen joukkue!"
+            );
+        }
+    } catch (e) {
+        console.log(e);
+    }
+
+    if (joukkue.jasenet.length < 2 || joukkue.jasenet.length > 5) {
+        const ekaTyhja = Array.from(jasenInputs).find((jasenInput) => {
+            console.log(jasenInput);
+
+            return jasenInput.value.trim() == "";
+        });
+        ekaTyhja.setCustomValidity("Anna 2-5 jäsentä!");
+    }
+}
+
+// Sivun osien näyttäminen
+function naytaPoistoNappi() {
+    const poistoNappi = document.getElementById("joukkueform-poista-container");
+    poistoNappi.removeAttribute("hidden");
+}
+
+function piilotaPoistoNappi() {
+    const poistoNappi = document.getElementById("joukkueform-poista-container");
+    poistoNappi.setAttribute("hidden", "hidden");
+}
+
+async function naytaLeimaukset() {
+    const leimausInput = document.getElementById("leimaukset");
+    const leimausSection = leimausInput.parentElement;
+
+    leimausSection.removeAttribute("hidden");
+}
+
+function piilotaLeimaukset() {
+    const leimausInput = document.getElementById("leimaukset");
+    const leimausSection = leimausInput.parentElement;
+
+    leimausSection.setAttribute("hidden", "hidden");
+}
+
+async function naytaKilpailut() {
     const sectionKilpailu = document.getElementById("section-kilpailu");
     const kilpailuSelect = sectionKilpailu.querySelector(
         'select[name="kilpailu"]'
     );
-    return kilpailuSelect.value;
+
+    const kilpailut = await haeKaikkiKilpailut();
+
+    let lahin = null;
+    let timedelta = null;
+    kilpailut.forEach((kilpailu) => {
+        const currentTimedelta = Math.abs(
+            Date.parse(kilpailu.alkuaika) - Date.now()
+        );
+        console.log(currentTimedelta);
+        if (!lahin || currentTimedelta < timedelta) {
+            lahin = kilpailu;
+            timedelta = currentTimedelta;
+        }
+        const option = document.createElement("option");
+        option.value = kilpailu.id;
+        option.text = kilpailu.id;
+        kilpailuSelect.add(option);
+    });
+
+    console.log("lähin", lahin);
+    kilpailuSelect.value = lahin.id;
+    kilpailuSelect.dispatchEvent(new Event("change"));
+    sectionKilpailu.removeAttribute("hidden");
+}
+
+function piilotaKilpailut() {
+    const sectionKilpailu = document.getElementById("section-kilpailu");
+    const kilpailuSelect = sectionKilpailu.querySelector(
+        'select[name="kilpailu"]'
+    );
+
+    while (kilpailuSelect.childElementCount > 0) {
+        kilpailuSelect.removeChild(kilpailuSelect.firstChild);
+    }
+
+    sectionKilpailu.setAttribute("hidden", "hidden");
+}
+
+function naytaTabit() {
+    const sectionTabs = document.getElementById("section-tabs");
+
+    sectionTabs.removeAttribute("hidden");
+}
+
+function piilotaTabit() {
+    const sectionTabs = document.getElementById("section-tabs");
+    const lomake = document.getElementById("joukkueform");
+    alustaJoukkueLomake();
+    piilotaPoistoNappi();
+    sectionTabs.setAttribute("hidden", "hidden");
 }
 
 // Tietokantakutsut
 async function haeSarjat(kilpailuId) {
     try {
-        let user = firebase.auth().currentUser;
-        let idToken = await user.getIdToken();
+        const idToken = await firebase.auth().currentUser.getIdToken();
 
         const res = await fetch(`${BASE_URL}/kilpailut/${kilpailuId}/sarjat`, {
             method: "GET",
@@ -327,14 +567,78 @@ async function haeSarjat(kilpailuId) {
 }
 
 async function lisaaJoukkue(joukkue) {
-    await db.collection('joukkueet').add(joukkue);
+    await db.collection("joukkueet").add(joukkue);
 }
 
-async function haeJoukkueetRajauksella(rajausehto, arvo) {
-    return await db.collection('joukkueet')
-        .where(rajausehto, "==", arvo)
-        .get();
+async function tallennaMuokattuJoukkue(joukkue) {
+    console.log("tallennetaan muokattu", joukkue);
+    await db.doc(`joukkueet/${joukkue.id}`).set(joukkue);
 }
+
+async function poistaJoukkue(joukkueId) {
+    await db.doc(`joukkueet/${joukkueId}`).delete();
+}
+
+/**
+ *
+ * @param {object} rajausehdot
+ * @returns
+ */
+async function haeJoukkueetRajauksilla(rajausehdot) {
+    const query = Object.entries(rajausehdot).reduce((acc, [ehto, arvo]) => {
+        return acc.where(ehto, "==", arvo);
+    }, db.collection("joukkueet"));
+
+    const fsJoukkueet = await query.get();
+
+    return luoTaulukko(fsJoukkueet);
+}
+
+async function haeJoukkueIdlla(joukkueId) {
+    console.log(`haetaan joukkuetta id: ${joukkueId}`);
+    const fsJoukkue = await db.doc(`joukkueet/${joukkueId}`).get();
+
+    const joukkue = fsJoukkue.data();
+    joukkue.id = fsJoukkue.id;
+
+    return joukkue;
+}
+
+async function haeKaikkiKilpailut() {
+    const fsKilpailut = await db.collection("kilpailut").get();
+    return luoTaulukko(fsKilpailut);
+}
+
+async function haeRastit(kilpailuId) {
+    const fsRastit = await db
+        .collection(`kilpailut/${kilpailuId}/rastit`)
+        .get();
+    return luoTaulukko(fsRastit);
+}
+
+async function haeJoukkueenLeimaukset(joukkueId) {
+    const fsLeimaukset = await db
+        .collection(`joukkue/${joukkueId}/leimaukset`)
+        .get();
+    return luoTaulukko(fsLeimaukset);
+}
+
+function luoTaulukko(fsTaulukko) {
+    const taulukko = [];
+
+    fsTaulukko.forEach((e) => {
+        const element = e.data();
+        element.id = e.id;
+        taulukko.push(element);
+    });
+
+    return taulukko;
+}
+
+firebase.auth().onAuthStateChanged(handleAuthStateChanged);
+
+const kilpailuSelect = document.getElementById("kilpailu-select");
+kilpailuSelect.addEventListener("change", handleKilpailunVaihto);
 
 let loginButton = document.getElementById("login-button");
 let logoutButton = document.getElementById("logout-button");
@@ -343,19 +647,19 @@ const joukkueForm = document.getElementById("joukkueform");
 const nimiInput = joukkueForm.querySelector('input[name="nimi"]');
 const jasenInputs = joukkueForm.querySelectorAll('input[name="jasen"]');
 
-joukkueForm.onsubmit = handleJoukkueFormSubmit;
-nimiInput.addEventListener('input', tarkistaNimi)
-jasenInputs.forEach((j => {
-    j.addEventListener('input', tarkistaJasenenNimi)
-}))
+joukkueForm.onsubmit = kasitteleJoukkuelomakkeenLahetys;
+nimiInput.addEventListener("input", tarkistaNimi);
+jasenInputs.forEach((j) => {
+    j.addEventListener("input", tarkistaJasenenNimi);
+});
 
-loginButton.onclick = signIn;
+loginButton.onclick = () => {
+    signIn();
+};
 
 logoutButton.onclick = () => {
     firebase.auth().signOut();
 };
-
-firebase.auth().onAuthStateChanged(handleAuthStateChanged);
 
 // const sarjat
 

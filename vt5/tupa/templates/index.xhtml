@@ -32,7 +32,7 @@
             <div id="kilpailu-content">
                 <!-- Tällä voi vaihtaa milloin tahansa valittua kilpailua -->
                 <label for="kilpailu">Valitse kilpailu</label>
-                <select name="kilpailu"></select>
+                <select name="kilpailu" id="kilpailu-select"></select>
             </div>
         </section>
 
@@ -48,9 +48,11 @@
                             checked="checked"
                         />
                         <label class="tab-label" for="joukkue">Joukkue </label>
+
                         <div class="tab" id="tab-joukkueform">
-                            <form class="joukkueform" id="joukkueform" novalidate="novalidate">
-                                <fieldset>
+                            <form class="joukkueform"
+                                id="joukkueform"
+                                novalidate="novalidate">
                                     <input
                                         id="joukkueform-id"
                                         name="id"
@@ -58,11 +60,7 @@
                                         value="-1"
                                     />
 
-                                    <div class="clear">
-                                        <label for="joukkueform-nimi"
-                                            >Nimi</label
-                                        >
-                                        <div class="input-container">
+                                        <label for="joukkueform-nimi">Nimi</label>
                                             <input
                                                 id="joukkueform-nimi"
                                                 name="nimi"
@@ -70,24 +68,14 @@
                                                 type="text"
                                                 value=""
                                             />
-                                        </div>
-                                    </div>
 
-                                    <div class="clear">
-                                        <label for="joukkueform-sarjat"
-                                            >Sarja</label
+                                        <label for="joukkueform-sarjat">Sarja</label
                                         >
-                                        <div
-                                            class="input-container"
-                                            id="joukkueform-sarjat"
-                                        ></div>
-                                    </div>
+                                        <div id="joukkueform-sarjat"></div>
 
-                                    <div class="clear">
                                         <label for="joukkueform-jasenet"
                                             >Jäsenet</label
                                         >
-                                        <div class="input-container">
                                             <ul id="joukkueform-jasenet">
                                                 <li>
                                                     <label for="jasen-0"
@@ -145,17 +133,25 @@
                                                     />
                                                 </li>
                                             </ul>
-                                        </div>
+
+                                    <div id="joukkueform-poista-container" hidden="hidden">
+                                        <label for="poista"
+                                            >Poista joukkue</label
+                                        ><input
+                                            id="joukkueform-poista"
+                                            name="poista"
+                                            type="checkbox"
+                                            value="y"
+                                        />
                                     </div>
 
+                                    <div class="error" id="joukkueform-error-msg"></div>
                                     <button
-                                        class="clear"
                                         type="submit"
                                         id="btn-joukkueform-submit"
                                     >
                                         Tallenna
                                     </button>
-                                </fieldset>
                             </form>
                         </div>
                     </section>
@@ -177,7 +173,7 @@
                         </div>
                     </section>
 
-                    <section>
+                    <section hidden="hidden">
                         <input
                             class="tab-toggle"
                             type="radio"
@@ -188,7 +184,9 @@
                             >Rastileimaukset</label
                         >
                         <div class="tab" id="tab-leimausform">
-                            <form>
+                            <form class="leimausform"
+                                  id="leimausform"
+                                  novalidate="novalidate">
                                 Täällä voi joukkue muokata rastileimauksiaan
                             </form>
                         </div>

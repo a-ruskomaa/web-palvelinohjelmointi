@@ -31,7 +31,7 @@ def get_kilpailu_sarjat(kilpailu_id: str):
         sarjat_dict[sarja.id] = sarja.to_dict()
         sarjat_dict[sarja.id]['joukkueet'] = {}
 
-    joukkueet = db.collection(f"joukkueet").where('kilpailu','==',kilpailu_id).stream()
+    joukkueet = db.collection(f"joukkueet").where('kilpailu','==',kilpailu_id).order_by('nimi').stream()
 
     for joukkue in joukkueet:
         sarjat_dict[sarja.id]['joukkueet'].update({joukkue.id: joukkue.to_dict()})

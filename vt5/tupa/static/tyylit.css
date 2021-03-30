@@ -1,6 +1,7 @@
 body {
   font-family: Verdana, Arial, sans-serif;
 }
+
 #tabs-content {
   display: flex;
   position: relative;
@@ -44,6 +45,7 @@ body {
   display: none;
   position: absolute;
   left: 0;
+  margin: 0.2em;
 }
 
 .hidden {
@@ -57,4 +59,97 @@ body {
 
 .joukkue-nimi:hover {
   text-decoration: underline;
+}
+
+.error {
+  color: red;
+  margin: auto 0.5rem;
+}
+
+.info {
+  color: blue;
+}
+
+form {
+  /* margin: 0rem 0rem; */
+  background-color: white;
+}
+
+form fieldset {
+  margin: 0;
+}
+
+form fieldset > * {
+  margin-bottom: 0.5rem;
+}
+
+form label {
+  padding: 0.2rem;
+}
+
+form.joukkueform {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  grid-gap: 16px;
+  max-width: 30%;
+  min-width: fit-content;
+}
+
+/* form.leimausform {
+  max-width: 20%;
+  min-width: fit-content;
+}
+
+form.rastiform {
+  max-width: 20%;
+  min-width: fit-content;
+} */
+
+form.joukkueform li {
+  list-style-type: none;
+}
+
+form.joukkueform label {
+  grid-column: 1 / 2;
+}
+
+form.joukkueform input {
+  grid-column: 2 / 3;
+}
+
+form.joukkueform .error {
+  grid-column: 1 / 3;
+}
+
+/* form.loginform {
+  max-width: 20%;
+} */
+
+#jasenet {
+  margin: 0 0 0 0.2rem;
+}
+
+#jasenet input {
+  margin: 0.1rem;
+}
+
+button {
+  background-color: #3395DD;
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  /* display: inline-block; */
+  cursor: pointer;
+  font-size: large;
+}
+
+form.joukkueform button, form.leimausform button, form.rastiform button {
+  background-color: white;
+  border: 2px solid #3395DD ;
+  border-radius: 10px;
+  color: #3395DD;
+  width: auto;
+  grid-column: 2 / 2;
 }
