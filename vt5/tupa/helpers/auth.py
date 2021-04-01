@@ -1,10 +1,8 @@
-from flask import Blueprint, redirect
 from flask.globals import request
-from flask.helpers import make_response, url_for
+from flask.helpers import make_response
 from firebase_admin import auth as firebase_auth
 from functools import wraps
 
-bp = Blueprint('auth', __name__, url_prefix='')
 
 def auth_required(func):
     """Sallii vain tunnistautuneilta käyttäjiltä pääsyn kyseiseen reittiin."""
@@ -35,9 +33,3 @@ def parse_jwt(header: str):
         return None
     return header.replace('Bearer ', '')
 
-
-@bp.route('/auth_test', methods=['GET'])
-@auth_required
-def test_auth():
-    print(request.headers['Authorization'])
-    return make_response({'status': 'OK'}, 200)

@@ -1,8 +1,5 @@
 from flask import Blueprint
 from firebase_admin import firestore
-from flask.globals import request
-from typing import List
-from functools import wraps
 from flask.helpers import make_response
 from data import data
 
@@ -25,9 +22,9 @@ def init():
     db = firestore.client()
     print("creating client")
 
-    # kilpailut_ref = db.collection('kilpailut')
+    kilpailut_ref = db.collection('kilpailut')
 
-    # delete_collection(kilpailut_ref, None)
+    delete_collection(kilpailut_ref, None)
 
     kilpailut_ref = db.collection('kilpailut')
     print("creating kilpailut_ref")

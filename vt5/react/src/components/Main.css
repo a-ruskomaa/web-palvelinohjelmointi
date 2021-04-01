@@ -1,0 +1,15 @@
+#tabs-content {
+    display: flex;
+    position: relative;
+    gap: 1em;
+  }
+  
+  
+.error {
+  color: red;
+  margin: auto 0.5rem;
+}
+
+.info {
+  color: blue;
+}

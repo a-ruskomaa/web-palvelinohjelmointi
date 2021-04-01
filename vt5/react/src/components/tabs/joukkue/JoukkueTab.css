@@ -1,0 +1,29 @@
+form.joukkueform {
+    display: grid;
+    grid-template-columns: 1fr 2.5fr 1fr;
+    grid-gap: 16px;
+    max-width: 40vw;
+    min-width: fit-content;
+}
+
+form.joukkueform > label {
+    grid-column: 1 / 2;
+}
+
+form.joukkueform > div > div > label {
+    margin: 0.2em;
+    white-space: nowrap;
+    grid-column: 2 / 3;
+}
+
+form.joukkueform > input {
+    grid-column: 2 / 3;
+}
+/* 
+form.joukkueform > div > input {
+    grid-column: 3 / 4;
+} */
+
+form.joukkueform .error {
+    grid-column: 1 / 3;
+}

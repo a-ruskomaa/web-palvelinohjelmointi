@@ -2,52 +2,6 @@ body {
   font-family: Verdana, Arial, sans-serif;
 }
 
-#tabs-content {
-  display: flex;
-  position: relative;
-  gap: 1em;
-}
-
-#kilpailu-content {
-  position: absolute;
-  top: 0;
-  right: 0;
-  display: block;
-  font-size: 2vh;
-}
-
-#kilpailu-contentq select {
-  font-size: 1em;
-}
-
-.tab-label {
-  display: block;
-  font-size: 2vh;
-  border: 1px solid black;
-  padding-left: 1em;
-  padding-right: 1em;
-}
-
-.tab-toggle {
-  display: none;
-}
-
-.tab-toggle:checked ~ label {
-  background-color: blue;
-  color: white;
-}
-
-.tab-toggle:checked ~ label ~ * {
-  display: block;
-}
-
-.tab {
-  display: none;
-  position: absolute;
-  left: 0;
-  margin: 0.2em;
-}
-
 .hidden {
   display: none;
 }
