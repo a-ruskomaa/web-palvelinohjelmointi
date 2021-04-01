@@ -12,16 +12,12 @@ const App = () => {
     const [user, loading, error] = useAuthState(auth);
     const [kaikkiKilpailut, setKaikkiKilpailut] = useState([]);
     const [valittuKilpailu, setValittuKilpailu] = useState();
-    const [valittuId, setValittuId] = useState("")
 
     const onKilpailuChange = (event) => {
         const kilpailu = kaikkiKilpailut.find(
             (k) => (k.id === event.target.value)
         );
-        console.log(kaikkiKilpailut);
-        console.log("valitaan kilpailu", kilpailu);
         setValittuKilpailu(Object.assign({},kilpailu));
-        setValittuId(kilpailu.id)
     };
 
     useEffect(() => {
@@ -40,14 +36,6 @@ const App = () => {
             });
         }
     }, [user]);
-
-    // useEffect(() => {
-    //     console.log("Käyttäjä vaihtui, nollataan kilpailu");
-    //     setValittuKilpailu("");
-    // }, [user]);
-
-    
-    console.log("valittu kilpailu", valittuKilpailu);
 
     return user ? (
         <div className="App">

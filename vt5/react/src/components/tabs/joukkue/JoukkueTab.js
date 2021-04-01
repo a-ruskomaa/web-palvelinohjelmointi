@@ -59,7 +59,7 @@ const JoukkueTab = ({ sarjat, kilpailuId, valittuJoukkue, dataUpdated }) => {
             resetForm();
             console.log("Lomake nollattu");
         };
-    }, [kilpailuId, valittuJoukkue]);
+    }, [kilpailuId, valittuJoukkue, user.email]);
 
     const resetForm = () => {
         setId();
@@ -132,7 +132,7 @@ const JoukkueTab = ({ sarjat, kilpailuId, valittuJoukkue, dataUpdated }) => {
             const ekaTyhja = jasenInputs.find((jasenInput) => {
                 console.log(jasenInput);
 
-                return jasenInput.value.trim() == "";
+                return jasenInput.value.trim() === "";
             });
             ekaTyhja.setCustomValidity("Anna 2-5 jäsentä!");
         } else {
@@ -234,6 +234,7 @@ const JoukkueTab = ({ sarjat, kilpailuId, valittuJoukkue, dataUpdated }) => {
 
     return (
         <section>
+            { valittuJoukkue ? <h3>Muokkaa joukkuetta</h3> : <h3>Lisää joukkue</h3> }
             <form className="joukkueform" onSubmit={onSubmitForm} noValidate>
                 <label htmlFor="joukkueform-nimi">Nimi</label>
                 <input

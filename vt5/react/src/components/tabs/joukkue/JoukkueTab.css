@@ -19,10 +19,10 @@ form.joukkueform > div > div > label {
 form.joukkueform > input {
     grid-column: 2 / 3;
 }
-/* 
-form.joukkueform > div > input {
-    grid-column: 3 / 4;
-} */
+
+form.joukkueform > button {
+    grid-column: 1 / 2;
+}
 
 form.joukkueform .error {
     grid-column: 1 / 3;

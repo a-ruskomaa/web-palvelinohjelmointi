@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 const Kilpailut = ( { kaikkiKilpailut, onKilpailuChange, valittuKilpailuId } ) => {
 
@@ -8,11 +8,10 @@ const Kilpailut = ( { kaikkiKilpailut, onKilpailuChange, valittuKilpailuId } ) =
 
     return (
         <div id="kilpailu-content">
-        <label>Valitse kilpailu
-        <select onChange={onKilpailuChange} value={valittuKilpailuId}>
+        <label htmlFor="kilpailu-select">Valitse kilpailu</label>
+        <select id="kilpailu-select" onChange={onKilpailuChange} value={valittuKilpailuId}>
             { options }
         </select>
-        </label>
     </div>
     )
 };

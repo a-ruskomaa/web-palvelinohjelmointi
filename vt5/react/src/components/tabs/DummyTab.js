@@ -2,9 +2,9 @@ import React from 'react';
 
 const DummyTab = ({viesti}) => {
     return (
-        <div>
+        <h4>
             { viesti }
-        </div>
+        </h4>
     )
 }
 

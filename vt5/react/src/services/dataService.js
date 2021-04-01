@@ -1,6 +1,7 @@
 import { auth, db } from './firebase'
 
-const BASE_URL = 'http://localhost:5000'
+const PORT = window.location.hostname === 'localhost' ? ":5000" : ""
+const BASE_URL = `${window.location.protocol}//${window.location.hostname}${PORT}/api`
 
 async function haeSarjat(kilpailuId) {
     console.log(`haetaan kilpailun ${kilpailuId} sarjat`);
@@ -14,6 +15,7 @@ async function haeSarjat(kilpailuId) {
             },
         });
         const sarjat = await res.json();
+        console.log("sarjat json", sarjat)
         const sarja_arr = Object.entries(sarjat).map(([id, sarja]) => {
             sarja.id = id
             sarja.joukkueet = Object.entries(sarja.joukkueet).map(([id, joukkue]) => {
@@ -26,8 +28,53 @@ async function haeSarjat(kilpailuId) {
         return sarja_arr
     } catch (err) {
         console.log(err);
+        return []
     }
 }
+
+
+async function haeRastit(kilpailuId) {
+    console.log(`haetaan kilpailun ${kilpailuId} rastit`);
+    try {
+        const idToken = await auth.currentUser.getIdToken();
+
+        const res = await fetch(`${BASE_URL}/kilpailut/${kilpailuId}/rastit`, {
+            method: "GET",
+            headers: {
+                Authorization: "Bearer " + idToken,
+            },
+        });
+        const rastit = await res.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(rastit, "application/xml");
+        
+        const rasti_arr = Array.from(xmlDoc.getElementsByTagName('rasti'))
+            .map(rasti => {
+                const [id,koodi,lat,lon] = Array.from(rasti.childNodes)
+                                            .map(n => n.textContent);
+                return {
+                    id,
+                    koodi,
+                    lat,
+                    lon
+                }
+        });
+        
+        console.log("rasti_arr",rasti_arr);
+        return rasti_arr
+    } catch (err) {
+        console.log(err);
+        return []
+    }
+}
+
+// async function haeRastit(kilpailuId) {
+//     console.log(`haetaan kilpailun ${kilpailuId} rastit`);
+//     const fsRastit = await db
+//         .collection(`kilpailut/${kilpailuId}/rastit`)
+//         .get();
+//     return luoTaulukko(fsRastit);
+// }
 
 async function lisaaJoukkue(joukkue) {
     console.log("lisataan uusi", joukkue);
@@ -78,14 +125,6 @@ async function haeKaikkiKilpailut() {
     console.log("haetaan kaikki kilpailut");
     const fsKilpailut = await db.collection("kilpailut").get();
     return luoTaulukko(fsKilpailut);
-}
-
-async function haeRastit(kilpailuId) {
-    console.log(`haetaan kilpailun ${kilpailuId} rastit`);
-    const fsRastit = await db
-        .collection(`kilpailut/${kilpailuId}/rastit`)
-        .get();
-    return luoTaulukko(fsRastit);
 }
 
 async function haeJoukkueenLeimaukset(joukkueId) {
