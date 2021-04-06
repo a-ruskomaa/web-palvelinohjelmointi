@@ -16,7 +16,7 @@ const Joukkue = ({ joukkue, handleJoukkueSelect }) => {
 
     return (
         <li>
-            { label }
+            { label } (leimauksia: {joukkue.leimauksia})
             <ul>
             { jasenElems }
             </ul>

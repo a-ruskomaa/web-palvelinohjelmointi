@@ -8,11 +8,15 @@ import { signIn, signOut } from "services/authService";
 import { useAuthState } from "react-firebase-hooks/auth";
 import dataService from "services/dataService";
 
+// Ylin ohjelmakomponentti, jossa hallinnoidaan valitun kilpailun tilaa
+// ja renderöidään muu sisältö sen mukaan onko kilpailua valittuna
 const App = () => {
     const [user, loading, error] = useAuthState(auth);
     const [kaikkiKilpailut, setKaikkiKilpailut] = useState([]);
     const [valittuKilpailu, setValittuKilpailu] = useState();
 
+    // koppaa kilpailun id:n select-valikon eventistä
+    // ja asettaa id:tä vastaavan kilpailun valituksi
     const onKilpailuChange = (event) => {
         const kilpailu = kaikkiKilpailut.find(
             (k) => (k.id === event.target.value)
@@ -20,24 +24,26 @@ const App = () => {
         setValittuKilpailu(Object.assign({},kilpailu));
     };
 
+    // käyttäjän kirjautuessa sisään haetaan kaikki kilpailut
+    // ja asetetaan ensimmäinen oletusarvoisesti valituksi
     useEffect(() => {
         if (user) {
-            console.log("Käyttäjä vaihtui, nollataan kilpailu");
             dataService.haeKaikkiKilpailut().then((data) => {
+                console.log("kilpailut",data)
                 setKaikkiKilpailut(data);
-                console.log("Haettu kaikki kilpailut", data);
                 if (data.length > 0) {
-                    console.log("valitaan eka vaihtoehto", data[0]);
                     setValittuKilpailu(data[0]);
                 } else {
-                    console.log("valitaan tyhjä kisa");
                     setValittuKilpailu();
                 }
+            }).catch(error => {
+                console.log(error)
             });
         }
     }, [user]);
 
     return user ? (
+        // jos käyttäjä on kirjautuneena
         <div className="App">
             <Kilpailut
                 kaikkiKilpailut={kaikkiKilpailut}
@@ -46,16 +52,19 @@ const App = () => {
             />
             <h1>Tulospalvelu</h1>
             {valittuKilpailu ? (
+                // jos kilpailu on valittuna
                 <>
                     <h2>{valittuKilpailu.id}</h2>
                     <Button onClickHandler={signOut} text="Kirjaudu ulos" />
-                    <Main kilpailuId={valittuKilpailu.id} />
+                    <Main valittuKilpailu={valittuKilpailu} />
                 </>
             ) : (
+                // jos kilpailua ei valittuna
                 <h2>{"Valitse kilpailu!"}</h2>
             )}
         </div>
     ) : (
+        // jos ei käyttäjää
         <div className="App">
             <h1>Tulospalvelu</h1>
             <Button onClickHandler={signIn} text="Kirjaudu sisään" />

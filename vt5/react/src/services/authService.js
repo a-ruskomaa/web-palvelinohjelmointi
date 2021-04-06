@@ -5,7 +5,7 @@ function signIn() {
         .then((result) => {
             /** @type {firebase.auth.OAuthCredential} */
             var user = result.user;
-            console.log(user);
+            console.log("signed in:", user);
         })
         .catch((error) => {
             console.log(error);

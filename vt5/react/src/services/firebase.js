@@ -16,7 +16,10 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 
-const db = firebase.firestore();
+var db = firebase.firestore();
+if (window.location.hostname === "localhost") {
+  db.useEmulator("localhost", 8080);
+}
 const provider = new firebase.auth.GoogleAuthProvider();
 const auth = firebase.auth();
 

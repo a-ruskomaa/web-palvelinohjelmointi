@@ -15,7 +15,7 @@ def create_app():
     app.config.from_pyfile(path_to_config)
 
     from tupa.blueprints import init_db, db
-    # app.register_blueprint(init_db.bp)
+    app.register_blueprint(init_db.bp)
     app.register_blueprint(db.bp)
 
     # @app.route('/', methods=["GET"])

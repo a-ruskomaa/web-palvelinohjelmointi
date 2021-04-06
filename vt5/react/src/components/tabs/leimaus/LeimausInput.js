@@ -4,7 +4,7 @@ const LeimausInput = ({
                         aika,
                         rasti,
                         index,
-                        poista,
+                        // poista,
                         rastit: kilpailunRastit,
                         onAikaInputChange,
                         onAikaInputBlur,
@@ -34,13 +34,13 @@ const LeimausInput = ({
                 onChange={(e) => onRastiSelectChange(e,index)}>
                     { optionElems }
             </select>
-            <label htmlFor={`leimausform-aika-${index}`}>Poista?</label>
+            <label htmlFor={`leimausform-poista-${index}`}>Poista?</label>
             <input
                 type="checkbox"
                 id={`leimausform-poista-${index}`}
                 name="poista"
                 value="poista"
-                checked={poista}
+                // checked={poista}
                 onChange={(e) => onPoistaInputChange(e,index)}
             />
         </div>

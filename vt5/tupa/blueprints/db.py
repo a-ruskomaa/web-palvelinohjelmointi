@@ -33,7 +33,10 @@ def get_kilpailu_sarjat(kilpailu_id: str):
     joukkueet = db.collection(f"joukkueet").where('kilpailu','==',kilpailu_id).order_by('nimi').stream()
 
     for joukkue in joukkueet:
-        sarjat_dict[sarja.id]['joukkueet'].update({joukkue.id: joukkue.to_dict()})
+        joukkue_dict = joukkue.to_dict()
+        print("joukkue :")
+        print(joukkue_dict)
+        sarjat_dict[joukkue_dict['sarja']]['joukkueet'].update({joukkue.id: joukkue_dict})
 
     return make_response(sarjat_dict, 200)
 
@@ -60,7 +63,6 @@ def get_kilpailu_rastit(kilpailu_id: str):
         lon_xml.text = str(data['lon'])
 
     xml_string = ET.tostring(rastit_xml,encoding='UTF-8')
-    print(xml_string)
 
     resp = make_response(xml_string, 200)
     resp.headers['Content-type'] = 'application/xml;charset=UTF-8'

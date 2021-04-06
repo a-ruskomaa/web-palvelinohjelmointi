@@ -11,7 +11,7 @@ const SarjaInput = ({id, valittuSarja, onSelectHandler, index}) => {
             name="sarja"
             value={id}
             required
-            checked={id === valittuSarja || (valittuSarja === undefined && index === 0) }
+            checked={id === valittuSarja}
             onChange={onSelectHandler}
             >
         </input>
