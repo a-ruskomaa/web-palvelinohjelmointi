@@ -1,0 +1,26 @@
+/paikkakunnat/
+ -> {nimi, maa, lat, lon, url}
+
+/paikkakunnat/<paikka>
+ -> {}
+
+/kayttaja
+ -> {suosikit, viimeiset 3}
+
+/kayttaja/suosikit
+[get, post, put, delete]
+ -> 
+
+ kirjautuminen
+
+ paikkakuntalistaus palvelimelta
+
+ viimeksi
+
+valinta(lat, lon):
+ - get_paikkakunnat (cache)
+ - laske lähimmät 3
+ - hae tiedot (cache)
+ - laske keskiarvo
+ - palauta data
+

@@ -1,0 +1,5 @@
+Flask
+flask_wtf
+flask-cors
+firebase-admin
+authlib
