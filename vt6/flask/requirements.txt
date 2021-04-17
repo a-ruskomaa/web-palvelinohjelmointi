@@ -1,5 +1,8 @@
 Flask
 flask_wtf
 flask-cors
+flask-caching
 firebase-admin
 authlib
+flask-sqlalchemy
+psycopg2-binary
