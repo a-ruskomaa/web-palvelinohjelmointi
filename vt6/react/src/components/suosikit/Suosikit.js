@@ -24,9 +24,10 @@ class Suosikit extends PureComponent {
         const { suosikit, handleValikkoSelect, handleValikkoRemove } = this.props
 
         const suosikkiElems = suosikit.map(([suosikki, lkm]) => {
+          const avattu = this.state.avattuValikko === suosikki
           return (<div key={`suosikki_${suosikki}`}>
-            <Suosikki paikkakunta={suosikki} handleSuosikkiClick={this.handleSuosikkiClick} />
-            {this.state.avattuValikko === suosikki ?
+            <Suosikki paikkakunta={suosikki} avattu={avattu} handleSuosikkiClick={this.handleSuosikkiClick} />
+            {avattu ?
               // Renderöidään valikko suosikkikomponentin alle jos kyseinen paikkakunta on valittuna
               <Valikko
                 paikkakunta={suosikki}

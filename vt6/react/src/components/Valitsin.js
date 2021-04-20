@@ -6,12 +6,12 @@ class Valitsin extends PureComponent {
     }
 
     render() {
-        const { id, valittu, paikkakunnat, onValitsinClick, onValitsinChange } = this.props;
+        const { id, valittuPaikkakunta, kartallaNaytetaan, paikkakunnat, onValitsinClick, onValitsinChange } = this.props;
         return (
-            <select
+            <select className={kartallaNaytetaan ? "valittu" : undefined}
                 name={`valinta${id}`}
                 id={`valinta${id}`}
-                value={valittu}
+                value={valittuPaikkakunta}
                 onClick={(e) => onValitsinClick(e.target.value, id, e)}
                 onChange={(e) => onValitsinChange(e.target.value, id, e)}>
 

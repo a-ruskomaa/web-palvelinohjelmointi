@@ -22,7 +22,7 @@ const Paikkakunta = ({ centerLatLon, markerLatLon, onKarttaDblClick }) => {
     // Keskittää kartan kun centerLatLon property saa uuden arvon
     useEffect(() => {
         map.setView(centerLatLon)
-    }, centerLatLon)
+    }, [centerLatLon, map])
 
     return markerLatLon[0] && markerLatLon[1] ? (
         <Marker position={markerLatLon} icon={DefaultIcon} />

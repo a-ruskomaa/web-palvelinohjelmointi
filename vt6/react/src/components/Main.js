@@ -75,9 +75,8 @@ class Main extends PureComponent {
         uudetPaikkakuntaValinnat[index] = paikkakunta;
 
         // Lisätään suosikkilistaukseen yksi katselukerta kyseiselle paikkakunnalle
-        let uudetSuosikit;
+        let uudetSuosikit = { ...this.state.suosikit };
         if (paikkakunta !== "kartta") {
-            uudetSuosikit = { ...this.state.suosikit };
             uudetSuosikit[paikkakunta] = uudetSuosikit[paikkakunta] + 1 || 1;
         }
 
@@ -88,13 +87,17 @@ class Main extends PureComponent {
             suosikit: uudetSuosikit
         });
         
-        // Etsitään valitun paikkakunnan koordinaatit ja keskitetään karttanäkymä
-        const pkObj = this.state.paikkakunnat.find(pk => pk.name === paikkakunta);
-        const centerLatLon = [pkObj.lat, pkObj.lon]
+        let centerLatLon = [...this.state.karttaCenter]
+        if (paikkakunta !== "kartta") {
+            // Etsitään valitun paikkakunnan koordinaatit ja keskitetään karttanäkymä
+            const pkObj = this.state.paikkakunnat.find(pk => pk.name === paikkakunta);
+            centerLatLon = [pkObj.lat, pkObj.lon]
+        }
 
         this.setState({
             paikkakuntaValinnat: uudetPaikkakuntaValinnat,
             karttaValinnat: uudetKarttaValinnat,
+            kartallaNaytetaan: numero,
             suosikit: uudetSuosikit,
             karttaCenter: centerLatLon
         });
@@ -102,7 +105,6 @@ class Main extends PureComponent {
         // Haetaan lopuksi paikkakuntakohtaiset säätiedot ja päivitetään komponentin tila 
         // kun pyyntöön saadaan vastaus
         if (paikkakunta !== "kartta") {
-            console.log("haetaan säätiedot paikkakunnalle", paikkakunta);
             dataService
                 .haeSaatiedotNimella(paikkakunta)
                 .then((data) => {
@@ -135,9 +137,9 @@ class Main extends PureComponent {
     onValitsinClick = (pk_nimi, id, event) => {
         const karttavalinta = this.state.karttaValinnat[id - 1];
         const paikkakunta = this.state.paikkakunnat.find(pk => pk.name === pk_nimi) || {lat: undefined,lon: undefined};
-        const centerLatLon = [karttavalinta.lat || paikkakunta.lat || jkl_koordinaatit[0],
+        const karttaCenter = [karttavalinta.lat || paikkakunta.lat || jkl_koordinaatit[0],
                               karttavalinta.lon || paikkakunta.lon || jkl_koordinaatit[1]];
-        this.setState({kartallaNaytetaan: id, karttaCenter: centerLatLon})
+        this.setState({kartallaNaytetaan: id, karttaCenter: karttaCenter})
     };
 
 
@@ -182,42 +184,52 @@ class Main extends PureComponent {
      * tallennetut paikkakuntavalinnat ja lisää ne komponentin tilaan.
      */
     async componentDidMount() {
-        const initialState = {};
+        const initialState = {
+            paikkakuntaValinnat: [...this.state.paikkakuntaValinnat],
+            suosikit: {...this.state.suosikit},
+            karttaValinnat: [...this.state.karttaValinnat]
+        };
 
         // Haetaan käyttäjän historia
         const kayttajanHistoria = await dataService.haeKayttajanHistoria(this.props.user.uid);
 
         if (kayttajanHistoria) {
             if (kayttajanHistoria.viimeksiValitut) {
-                initialState.paikkakuntaValinnat = kayttajanHistoria.viimeksiValitut;
+                initialState.paikkakuntaValinnat.splice(0, kayttajanHistoria.viimeksiValitut.length, ...kayttajanHistoria.viimeksiValitut);
             }
             if (kayttajanHistoria.karttahistoria) {
-                initialState.karttaValinnat = kayttajanHistoria.karttahistoria;
+                initialState.karttaValinnat.splice(0, kayttajanHistoria.karttahistoria.length, ...kayttajanHistoria.karttahistoria);
             }
             if (kayttajanHistoria.suosikit) {
                 initialState.suosikit = kayttajanHistoria.suosikit;
             }
-        } else {
-            // Tallennetaan uuden käyttäjän tiedot firestoreen
-            dataService
-                .tallennaKayttajanHistoria(this.props.user.uid, {
-                    viimeksiValitut: this.state.paikkakuntaValinnat,
-                    suosikit: this.state.suosikit,
-                    karttahistoria: this.state.karttaValinnat
-                })
-                .then(() => console.log("Uuden käyttäjän tiedot tallennettu"))
-                .catch((e) =>
-                    console.log("Virhe käyttäjän tietojen tallennuksessa", e)
-                );
         }
+        // } else {
+        //     // Tallennetaan uuden käyttäjän tiedot firestoreen
+        //     dataService
+        //         .tallennaKayttajanHistoria(this.props.user.uid, {
+        //             viimeksiValitut: this.state.paikkakuntaValinnat,
+        //             suosikit: this.state.suosikit,
+        //             karttahistoria: this.state.karttaValinnat
+        //         })
+        //         .then(() => console.log("Uuden käyttäjän tiedot tallennettu"))
+        //         .catch((e) =>
+        //             console.log("Virhe käyttäjän tietojen tallennuksessa", e)
+        //         );
+        // }
 
         // Haetaan paikkakuntalistaus
         initialState.paikkakunnat = await dataService.haePaikkakunnat();
 
+        const karttavalinta = initialState.karttaValinnat[0];
+        const paikkakunta = initialState.paikkakunnat.find(pk => pk.name === initialState.paikkakuntaValinnat[0]) || {lat: undefined,lon: undefined};
+        initialState.karttaCenter = [karttavalinta.lat || paikkakunta.lat || jkl_koordinaatit[0],
+                              karttavalinta.lon || paikkakunta.lon || jkl_koordinaatit[1]];
+
         this.setState(initialState);
 
         // Iteroidaan käyttäjän edellisen katselukerran tiedot läpi ja haetaan niitä vastaavat säätiedot
-        for (const i = 0; i < 3; i++) {
+        for (let i = 0; i < 3; i++) {
             if (initialState.paikkakuntaValinnat[i] !== "") {
                 if (initialState.paikkakuntaValinnat[i] === "kartta" && 
                     initialState.karttaValinnat[i]) {
@@ -252,6 +264,10 @@ class Main extends PureComponent {
         this.controller.abort();
     }
 
+    // componentDidUpdate() {
+    //     console.log("new state", this.state)
+    // }
+
     render() {
         const suosikit = Object.entries(this.state.suosikit);
         suosikit.sort((a, b) => b[1] - a[1]);
@@ -264,6 +280,7 @@ class Main extends PureComponent {
             <div className="grid-container">
                 <Valitsinpalkki
                     paikkakuntaValinnat={this.state.paikkakuntaValinnat}
+                    kartallaNaytetaan={this.state.kartallaNaytetaan}
                     paikkakunnat={paikanNimet}
                     onValitsinChange={this.handlePaikkakuntaSelect}
                     onValitsinClick={this.onValitsinClick}

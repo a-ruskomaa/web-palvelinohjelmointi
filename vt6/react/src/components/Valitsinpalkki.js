@@ -7,25 +7,28 @@ class Valitsinpalkki extends PureComponent {
     }
 
     render() {
-        const {paikkakuntaValinnat, paikkakunnat, onValitsinChange, onValitsinClick} = this.props;
+        const {paikkakuntaValinnat, kartallaNaytetaan, paikkakunnat, onValitsinChange, onValitsinClick} = this.props;
         return (
             <div className="valitsinpalkki">
                 <h3>Valitut paikkakunnat</h3>
                 <Valitsin
                     id={1}
-                    valittu={paikkakuntaValinnat[0]}
+                    valittuPaikkakunta={paikkakuntaValinnat[0]}
+                    kartallaNaytetaan={kartallaNaytetaan === 1}
                     paikkakunnat={paikkakunnat}
                     onValitsinClick={onValitsinClick}
                     onValitsinChange={onValitsinChange}/>
                 <Valitsin
                     id={2}
-                    valittu={paikkakuntaValinnat[1]}
+                    valittuPaikkakunta={paikkakuntaValinnat[1]}
+                    kartallaNaytetaan={kartallaNaytetaan === 2}
                     paikkakunnat={paikkakunnat}
                     onValitsinClick={onValitsinClick}
                     onValitsinChange={onValitsinChange}/>
                 <Valitsin
                     id={3}
-                    valittu={paikkakuntaValinnat[2]}
+                    valittuPaikkakunta={paikkakuntaValinnat[2]}
+                    kartallaNaytetaan={kartallaNaytetaan === 3}
                     paikkakunnat={paikkakunnat}
                     onValitsinClick={onValitsinClick}
                     onValitsinChange={onValitsinChange}/>

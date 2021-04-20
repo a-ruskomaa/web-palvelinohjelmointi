@@ -155,7 +155,7 @@ async function haeSaatiedotKoordinaateilla(lat, lon) {
 async function haeKayttajanHistoria(uid) {
     const doc = await db.doc(`kayttajat/${uid}`).get();
     if (doc.exists) {
-        return kayttajanHistoria.data();
+        return doc.data();
     }
     return undefined
 }
@@ -187,7 +187,29 @@ async function haeKayttajanHistoria(uid) {
  * }
  */
 async function tallennaKayttajanHistoria(uid, historia) {
-    return await db.doc(`kayttajat/${uid}`).set(historia)
+    console.log("historia ennen", historia);
+    const filteredHistoria = JSON.parse(JSON.stringify(historia))
+    console.log("historia jalkeen", filteredHistoria);
+    return await db.doc(`kayttajat/${uid}`).set(filteredHistoria, {merge: true})
+}
+
+/** Funktio tekee argumenttina annetusta objektista syväkopion,
+ * johon on kopioitu vain propertyt, joilla on arvo
+ */
+function _deepCopy(object) {
+    const newObject = Object.create(Object.getPrototypeOf(object));
+    Object.entries(object).forEach(([key, value]) => {
+        // console.log(key, value);
+        if (typeof value === "object") {
+            const newProp = _deepCopy(value);
+            if (newProp) {
+                newObject[key] = newProp;
+            }
+        } else if (value !== undefined) {
+            newObject[key] = value;
+        }
+    });
+    return Object.entries(newObject).length > 0 ? newObject : undefined;
 }
 
 

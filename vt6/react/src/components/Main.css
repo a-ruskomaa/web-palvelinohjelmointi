@@ -44,6 +44,10 @@
     cursor: pointer;
 }
 
+.avattu {
+    text-decoration: underline;
+}
+
 .suosikki:hover {
     text-decoration: underline;
 }
@@ -66,4 +70,8 @@
 
 .valitsinpalkki select {
     margin: 1rem;
+}
+
+.valittu {
+    border: 2px solid black;
 }

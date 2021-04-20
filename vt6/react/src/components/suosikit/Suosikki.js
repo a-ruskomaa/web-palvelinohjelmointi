@@ -6,9 +6,9 @@ class Suosikki extends PureComponent {
       }
 
       render() {
-        const { paikkakunta, handleSuosikkiClick } = this.props;
+        const { paikkakunta, avattu, handleSuosikkiClick } = this.props;
         return (
-          <div className="suosikki" onClick={() => handleSuosikkiClick(paikkakunta)}>{paikkakunta}</div>
+          <div className={`suosikki ${avattu ? "avattu" : undefined}`} onClick={() => handleSuosikkiClick(paikkakunta)}>{paikkakunta}</div>
         )
       }
 }
