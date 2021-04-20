@@ -4,6 +4,8 @@ import L from "leaflet";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
+// Jostain syystä react-leaflet ei osaa hakea oletusikonia oikeasta osoitteesta, vaan herjaa 404.
+// Kierretään tämä ongelma määrittelemällä oma oletusikoni.
 const DefaultIcon = L.icon({
     iconUrl: icon,
     shadowUrl: iconShadow,
@@ -11,18 +13,18 @@ const DefaultIcon = L.icon({
     iconAnchor: [12,41]
 });
 
-const Paikkakunta = ({ centerLatLon, markerLatLon, paikkakunta, onKarttaDblClick }) => {
+const Paikkakunta = ({ centerLatLon, markerLatLon, onKarttaDblClick }) => {
+    // Kutsutaan tapahtumankäsittelijää kun karttaa tuplaklikataan
     const map = useMapEvents({
         dblclick: onKarttaDblClick,
     });
 
+    // Keskittää kartan kun centerLatLon property saa uuden arvon
     useEffect(() => {
-
         map.setView(centerLatLon)
     }, centerLatLon)
 
     return markerLatLon[0] && markerLatLon[1] ? (
-        // <Marker position={[lat, lon]}>
         <Marker position={markerLatLon} icon={DefaultIcon} />
     ) : null;
 };

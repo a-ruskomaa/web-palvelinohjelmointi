@@ -13,42 +13,62 @@ MML_API_URL='https://avoin-paikkatieto.maanmittauslaitos.fi/geocoding/v1/pelias/
 
 @cache.cached(timeout=86400, key_prefix='paikkakunnat')
 def hae_paikkakunnat():
-    results = db.session.execute("SELECT name, lat, lon, url FROM weather WHERE countrycode = 'FI'")
-    res_arr = [dict(result) for result in results]
-    return res_arr
+    """ Palauttaa listauksen tietokannan sisältämistä paikkakunnista maatunnuksella 'FI' """
+    try:
+        results = db.session.execute("SELECT name, lat, lon, url FROM weather WHERE countrycode = 'FI'")
+        res_arr = [dict(result) for result in results]
+        return res_arr
+    except Exception as e:
+        print("Virhe tietokantayhteydessä:")
+        print(e)
+        return []
 
 @cache.memoize(timeout=86400)
 def etsi_lahin_paikkakunta(lat, lon):
-    query = sql.text(
-        "SELECT name, lat, lon, (point(:lon,:lat) <@> point(lon,lat)) As dist, url "
-        "FROM weather "
-        "ORDER BY dist ASC "
-        "LIMIT 1"
-    )
-    results = db.session.execute(query, params={'lon':lon, 'lat':lat})
-    res_arr = [dict(result) for result in results]
+    """ Etsii tietokannasta annettuja koordinaatteja lähimmän paikkakunnan. """
+    try:
+        query = sql.text(
+            "SELECT name, lat, lon, (point(:lon,:lat) <@> point(lon,lat)) As dist, url "
+            "FROM weather "
+            "ORDER BY dist ASC "
+            "LIMIT 1"
+        )
+        results = db.session.execute(query, params={'lon':lon, 'lat':lat})
+        res_arr = [dict(result) for result in results]
 
-    return res_arr
+        return res_arr
+    except Exception as e:
+        print("Virhe tietokantayhteydessä:")
+        print(e)
+        return []
 
 @cache.cached(timeout=86400, key_prefix='mittausasemat')
 def hae_mittausasemat():
+    """ Hakee listauksen digitrafficin API:sta löytyvistä mittausasemista.
+    Listaus sisältää jokaisesta asemasta asemakohtaisen id:n, sekä aseman koordinaatit. """
     user_agent = "TIES4080 demo application roarusko@jyu.fi"
     req = urllib.request.Request(url=DIGITRAFFIC_METADATA_URL, headers={'Accept-Encoding': 'gzip', 'User-Agent': user_agent})
-    with urllib.request.urlopen(req) as response:
-        gzip_res = gzip.GzipFile(fileobj=response)
-        data = json.load(gzip_res)
+    try:
+        with urllib.request.urlopen(req) as response:
+            gzip_res = gzip.GzipFile(fileobj=response)
+            data = json.load(gzip_res)
 
-        asemat = [{
-            'id': station['id'],
-            'coordinates': {
-                'lon':station['geometry']['coordinates'][0],
-                'lat':station['geometry']['coordinates'][1]
-                }} for station in data['features']]
+            asemat = [{
+                'id': station['id'],
+                'coordinates': {
+                    'lon':station['geometry']['coordinates'][0],
+                    'lat':station['geometry']['coordinates'][1]
+                    }} for station in data['features']]
 
-        return asemat
+            return asemat
+    except Exception as e:
+        print("Virhe mittausasemien hakemisessa:")
+        print(e)
+        return []
 
 @cache.memoize(timeout=3600)
 def hae_mittausdata(id):
+    """ Hakee annettua id:tä vastaavan mittausaseman mittausdatan digitrafficin API:sta. """
     req = urllib.request.Request(url=DIGITRAFFIC_API_URL+str(id), headers={'Accept-Encoding': 'gzip'})
 
     saatiedot = {
@@ -63,13 +83,12 @@ def hae_mittausdata(id):
 
     try:
         with urllib.request.urlopen(req) as response:
-            print(f"Haettu mittausdata, id: {id}")
-            print(response)
             gzip_res = gzip.GzipFile(fileobj=response)
             data = json.load(gzip_res)
 
-
-            # TODO try catch
+            # Otetaan talteen vain yllä kuvatun rakenteen mukaiset tiedot.
+            # Tässä jätetään yksinkertaisuuden vuoksi huomioimatta vaihtoehtoiset
+            # anturit esim. maan tai tien lämpötilalle (MAA_2 jne)
             for mittari in data['weatherStations'][0]['sensorValues']:
                 if mittari['name'] in saatiedot.keys():
                     saatiedot[mittari['name']] = mittari['sensorValue']
@@ -80,6 +99,7 @@ def hae_mittausdata(id):
     return saatiedot
 
 def etsi_lahimmat_mittausasemat(lat, lon, n):
+    """ Etsii digitrafficin API:sta annettuja koordinaatteja lähimpänä olevat n mittausasemaa. """
     mittausasemat = hae_mittausasemat()
 
     lahimmat = [None for i in range(n)]
@@ -93,7 +113,11 @@ def etsi_lahimmat_mittausasemat(lat, lon, n):
     for asema in mittausasemat:
         dist = _calculate_distance(point, asema['coordinates'])
 
+        # Iteroidaan jokaisen mittausaseman kohdalla aiemmin tallennetut n lähintä
+        # asemaa ja verrataan onko asema lähempänä. Saisi toteutettua tehokkaamminkin,
+        # mutta näillä mennään...
         for i, prev_dist in enumerate(lahimmat_dist):
+            # huomioidaan vain alle 100km päässä olevat asemat
             if dist < 100 and (not prev_dist or dist <= prev_dist):
                 # jätetään samassa sijainnissa sijaitsevat mittausasemat huomioimatta
                 if (dist == prev_dist):
@@ -109,8 +133,11 @@ def etsi_lahimmat_mittausasemat(lat, lon, n):
     return [{'id': lahimmat[i], 'dist': lahimmat_dist[i]} for i, _ in enumerate(lahimmat)]
 
 
-def hae_saatiedot(ids):
-    data = [hae_mittausdata(id) for id in ids]
+def hae_saatiedot(id_list):
+    """ Hakee parametreinä annettuja id-tunnisteita vastaavien mittausasemien säätiedot ja palauttaa mittaustulosten keskiarvot. """
+
+    # Haetaan asemakohtainen mittausdata
+    data = [hae_mittausdata(id) for id in id_list]
 
     saatiedot = {
         'ILMA': None,
@@ -135,8 +162,6 @@ def hae_saatiedot(ids):
     # summataan mittaustulokset yhteen
     for d in data:
         for k, v in d.items():
-            print("k", k)
-            print("v", v)
             if not v:
                 continue
             if not saatiedot[k]:
@@ -156,7 +181,9 @@ def hae_saatiedot(ids):
 
 @cache.memoize(timeout=3600)
 def hae_paikannimi(lat, lon):
+    """ Hakee maanmittauslaitoksen reverse geocoding API:n avulla annettuja koordinaatteja vastaavan paikannimen """
     api_key = current_app.config.get('MML_API_KEY')
+    # muodostetaan parametrisoitu pyyntö
     params = urllib.parse.urlencode({'point.lat': lat, 'point.lon': lon, 'api-key': api_key})
     req = urllib.request.Request(url=f"{MML_API_URL}?{params}", method="GET")
 
@@ -173,24 +200,29 @@ def hae_paikannimi(lat, lon):
 
 @cache.memoize(timeout=3600)
 def hae_saaennuste(url):
+    """ Hakee annettua url-osoitetta vastaavat säätiedot MET Norwayn API:sta. """
+    # enkoodataan url:stä muut kuin ascii-merkit
     req = urllib.request.Request(url=urllib.parse.quote(url, safe='/:'), headers={'Accept-Encoding': 'gzip'})
     with urllib.request.urlopen(req) as response:
+        # kaivetaan tiedosto esiin gzipistä
         gzip_res = gzip.GzipFile(fileobj=response)
+        # parsitaan tiedosto xml-puuksi
         xml = ET.parse(gzip_res)
-        # root = xml.getroot()
         forecast = xml.find('forecast')
         tabular = forecast.find('tabular')
         times = tabular.iterfind('time')
 
-        lampotilat = [
-            {'aika': time.get('from').replace("T", " "),
-            'lampotila': time.find('temperature').get('value')} for time in times]
+        # kootaan lämpötilat listalle
+        lampotilat = [{'aika': time.get('from').replace("T", " "),
+                        'lampotila': time.find('temperature').get('value')}
+                        for time in times]
 
+        # palautetaan 10 ensimmäistä ennustetta
         return lampotilat[:10]
 
 
 def _calculate_distance(point_a, point_b):
-    """Laskee kahden rastin välisen etäisyyden"""
+    """Laskee kahden pisteen välisen etäisyyden"""
     try:
         # Muunnetaan koordinaatit asteista radiaaneiksi
         lat1 = radians(float(point_a['lat']))

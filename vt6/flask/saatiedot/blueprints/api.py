@@ -24,16 +24,21 @@ def paikkakunnat():
 
 @bp.route('/paikkakunnat/<paikkakunta>', methods=['GET'])
 def paikkakunta(paikkakunta):
-    print('haetaan paikkakunnat...')
+    """ Reitti, jonka kautta asiakassovellus voi hakea kaikki paikkakuntakohtaiset mittaus- ja ennustetiedot.
+        
+        Funktio etsii url-parametrina annettua nimeä vastaavan paikkakunnan koordinaatit, etsii 3 tätä pistettä
+        lähintä mittausasemaa ja hakee niiden mittaustiedot. Lisäksi funktio hakee tietokantaan tallennetusta
+        url-osoitteesta paikkakunnan sääennusteen. 
+        
+        Nämä kannattaisi todellisuudessa jakaa omiksi reiteikseen, jotta epäonnistunut pyyntö tai pitkä vastausviive
+        eivät hidastaisi datan näyttämistä asiakassovelluksessa. Palvelinsovellus kyllä toipuu yhteysvirheistä ulkoisiin
+        palveluihin, mutta vastauksen muodostamisessa saattaa tällöin kestää turhan pitkään. """
     paikkakunnat = hae_paikkakunnat()
 
     try:
         loydetty = next(filter(lambda pk: pk['name'] == paikkakunta, paikkakunnat))
-        print('etsitään mittausasemat...')
         lahimmat = etsi_lahimmat_mittausasemat(loydetty['lat'], loydetty['lon'], 3)
-        print('haetaan säätiedot...')
         havainnot = hae_saatiedot([lahin['id'] for lahin in lahimmat])
-        print('haetaan sääennuste...')
         ennuste = hae_saaennuste(loydetty['url'])
 
         return json.dumps({
@@ -47,18 +52,22 @@ def paikkakunta(paikkakunta):
 
 @bp.route('/koordinaatit', methods=['GET'])
 def koordinaatit():
+    """ Reitti, jonka kautta asiakassovellus voi hakea kaikki annettuja koordinaatteja vastaavat mittaus- ja ennustetiedot.
+    
+    Funktio etsii pyynnön parametreina annettuja koordinaatteja lähimmän mittausaseman ja hakee sen mittaustiedot. Lisäksi
+    funktio etsii pisteitä lähinnä olevan paikkakunnan, hakee tietokantaan tallennetusta url-osoitteesta sen sääennusteen.
+    Jos koordinaatit sijaitsevat Suomessa, hakee funktio myös MML:n API:sta pisteitä vastaavan paikan nimen. 
+    
+    Nämä kannattaisi todellisuudessa jakaa omiksi reiteikseen, jotta epäonnistunut pyyntö tai pitkä vastausviive
+    eivät hidastaisi datan näyttämistä asiakassovelluksessa. Palvelinsovellus kyllä toipuu yhteysvirheistä ulkoisiin
+    palveluihin, mutta vastauksen muodostamisessa saattaa tällöin kestää turhan pitkään. """
     lat = request.args.get('lat', 0.0, type=float)
     lon = request.args.get('lon', 0.0, type=float)
     
-    print('etsitään mittausasemat...')
     lahimmat = etsi_lahimmat_mittausasemat(lat, lon, 1)
-    print('haetaan säätiedot...')
     havainnot = hae_saatiedot([lahin['id'] for lahin in lahimmat])
-    print('etsitään lähin paikkakunta...')
     paikkakunta = etsi_lahin_paikkakunta(lat, lon)
-    print('etsitään paikannimi...')
     paikannimi = hae_paikannimi(lat, lon)
-    print('haetaan sääennuste...')
     ennuste = hae_saaennuste(paikkakunta[0]['url'])
 
     return json.dumps({
@@ -68,28 +77,28 @@ def koordinaatit():
         'havainnot_pk': paikannimi}, default=_decimal_default), 200
 
 
-@bp.route('/mittaukset', methods=['GET'])
-def mittaukset():
-    lat = request.args.get('lat', 0.0, type=float)
-    lon = request.args.get('lon', 0.0, type=float)
-    n = request.args.get('n', 1, type=int)
+# @bp.route('/mittaukset', methods=['GET'])
+# def mittaukset():
+#     lat = request.args.get('lat', 0.0, type=float)
+#     lon = request.args.get('lon', 0.0, type=float)
+#     n = request.args.get('n', 1, type=int)
 
-    lahimmat = etsi_lahimmat_mittausasemat(lat, lon, n)
-    mittausdata = hae_saatiedot([lahin['id'] for lahin in lahimmat])
+#     lahimmat = etsi_lahimmat_mittausasemat(lat, lon, n)
+#     mittausdata = hae_saatiedot([lahin['id'] for lahin in lahimmat])
 
-    return json.dumps(mittausdata, default=_decimal_default), 200
+#     return json.dumps(mittausdata, default=_decimal_default), 200
 
 
-@bp.route('/ennuste', methods=['GET'])
-def ennuste():
-    lat = request.args.get('lat', 0.0, type=float)
-    lon = request.args.get('lon', 0.0, type=float)
+# @bp.route('/ennuste', methods=['GET'])
+# def ennuste():
+#     lat = request.args.get('lat', 0.0, type=float)
+#     lon = request.args.get('lon', 0.0, type=float)
 
-    paikkakunta = etsi_lahin_paikkakunta(lat, lon)
+#     paikkakunta = etsi_lahin_paikkakunta(lat, lon)
 
-    ennuste = hae_saaennuste(paikkakunta[0]['url'])
+#     ennuste = hae_saaennuste(paikkakunta[0]['url'])
 
-    return json.dumps(ennuste), 200
+#     return json.dumps(ennuste), 200
 
 
 def _decimal_default(obj):

@@ -3,6 +3,10 @@ import { auth, db } from './firebase'
 const PORT = window.location.hostname === 'localhost' ? ":5000" : ""
 const BASE_URL = `${window.location.protocol}//${window.location.hostname}${PORT}/api`
 
+/**
+ * Hakee palvelimelta listauksen paikkakunnista.
+ * @returns Palauttaa paikkakunnat taulukossa
+ */
 async function haePaikkakunnat() {
     try {
         // liitetään pyyntöön id-tokeni jolla käyttäjä tunnistetaan palvelimella
@@ -23,6 +27,34 @@ async function haePaikkakunnat() {
     }
 }
 
+/**
+ * Hakee nimeä vastaavan paikkakunnan säätiedot ja palauttaa ne taulukossa
+ * @param {String} paikkakunta 
+ * @returns Palauttaa objektin muodossa:
+ * 
+ * {
+        'havainnot': {
+            'ILMA': Number,
+            'MAA_1': Number,
+            'TIE_1': Number,
+            'TUULENSUUNTA': Number,
+            'KESKITUULI': Number,
+            'ILMAN_KOSTEUS': Number,
+            'NAKYVYYS': Number,
+        },
+        'ennuste': [
+            {
+                'aika' : String[yyyy-MM-dd hh:mm:ss],
+                'lampotila: Number
+            },
+            {
+                ...
+            }
+        ],
+        'ennuste_pk': String,
+        'havainnot_pk': String
+    }
+ */
 async function haeSaatiedotNimella(paikkakunta) {
     try {
         // liitetään pyyntöön id-tokeni jolla käyttäjä tunnistetaan palvelimella
@@ -44,8 +76,35 @@ async function haeSaatiedotNimella(paikkakunta) {
     }
 }
 
+/**
+ * Hakee nimeä vastaavan paikkakunnan säätiedot ja palauttaa ne taulukossa
+ * @param {String} paikkakunta 
+ * @returns Palauttaa objektin muodossa:
+ * 
+ * {
+        'havainnot': {
+            'ILMA': Number,
+            'MAA_1': Number,
+            'TIE_1': Number,
+            'TUULENSUUNTA': Number,
+            'KESKITUULI': Number,
+            'ILMAN_KOSTEUS': Number,
+            'NAKYVYYS': Number,
+        },
+        'ennuste': [
+            {
+                'aika' : String[yyyy-MM-dd hh:mm:ss],
+                'lampotila: Number
+            },
+            {
+                ...
+            }
+        ],
+        'ennuste_pk': String,
+        'havainnot_pk': String
+    }
+ */
 async function haeSaatiedotKoordinaateilla(lat, lon) {
-    // const params = new URLSearchParams(["lat", lat], ["lon", lon])
     try {
         // liitetään pyyntöön id-tokeni jolla käyttäjä tunnistetaan palvelimella
         const idToken = await auth.currentUser.getIdToken();
@@ -67,13 +126,68 @@ async function haeSaatiedotKoordinaateilla(lat, lon) {
 }
 
 
-async function haeKayttajanHistoria(user) {
-    return await db.doc(`kayttajat/${user.uid}`).get()
+/**
+ * Hakee käyttäjän hakuhistorian
+ * @param {String} uid Käyttäjän yksilöivä tunniste
+ * @returns Palauttaa objektin, jonka sisältämä data on muodossa:
+ * 
+ * {
+ *      viimeksiValitut: [String, String, String],
+        suosikit: {
+            String: Number,
+            String: Number,
+            ...
+        },
+        karttahistoria: [
+            {
+                lat: Number,
+                lon: Number
+            },
+            {
+                ...
+            },
+            {
+                ...
+            }
+        ],
+ * }
+ */
+async function haeKayttajanHistoria(uid) {
+    const doc = await db.doc(`kayttajat/${uid}`).get();
+    if (doc.exists) {
+        return kayttajanHistoria.data();
+    }
+    return undefined
 }
 
-
-async function tallennaKayttajanHistoria(user, historia) {
-    return await db.doc(`kayttajat/${user.uid}`).set(historia)
+/**
+ * Tallentaa käyttäjän hakuhistorian
+ * @param {String} uid Käyttäjän yksilöivä tunniste
+ * @param {Object} historia Objekti, joka on annettava muodossa:
+ * 
+ * {
+ *      viimeksiValitut: [String, String, String],
+        suosikit: {
+            String: Number,
+            String: Number,
+            ...
+        },
+        karttahistoria: [
+            {
+                lat: Number,
+                lon: Number
+            },
+            {
+                ...
+            },
+            {
+                ...
+            }
+        ],
+ * }
+ */
+async function tallennaKayttajanHistoria(uid, historia) {
+    return await db.doc(`kayttajat/${uid}`).set(historia)
 }
 
 

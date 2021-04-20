@@ -1,6 +1,9 @@
 import React, { PureComponent } from "react";
 import { Line } from "react-chartjs-2";
 
+/**
+ * Staattinen pohja dataseteille, joihin todelliset datapisteet lisätään kun komponentti saa propertyt.
+ */
 const data = {
     datasets: [
         {
@@ -38,12 +41,15 @@ class Kaavio extends PureComponent {
     render() {
         const { ennusteet, ennusteet_pk } = this.props;
 
+        // Lisätään x-akselin otsakkeiksi ennusteiden aikavälit tai tyhjiä arvoja jos taulukko ei sisällä lainkaan ennusteita
         data.labels = (ennusteet[0] || ennusteet[1] || ennusteet[2] || new Array(10).fill({aika: ""})).map(dp => dp.aika);
 
+        // Lisätään datasettien otsakkeiksi paikkakuntien nimet tai teksti "Paikkakunta x"
         data.datasets[0].label = (ennusteet_pk[0] || "Paikkakunta 1")
         data.datasets[1].label = (ennusteet_pk[1] || "Paikkakunta 2")
         data.datasets[2].label = (ennusteet_pk[2] || "Paikkakunta 3")
 
+        // Korvataan datasettien data ennusteiden lämpötila-arvoilla tai tyhjällä datalla
         data.datasets[0].data = (ennusteet[0] || new Array(10).fill({lampotila: undefined})).map(dp => dp.lampotila);
         data.datasets[1].data = (ennusteet[1] || new Array(10).fill({lampotila: undefined})).map(dp => dp.lampotila);
         data.datasets[2].data = (ennusteet[2] || new Array(10).fill({lampotila: undefined})).map(dp => dp.lampotila);

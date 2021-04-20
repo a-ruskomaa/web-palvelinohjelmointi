@@ -12,6 +12,7 @@ class Suosikit extends PureComponent {
       }
 
       handleSuosikkiClick = (paikkakunta) => {
+        // Asetetaan klikattu paikkakunta valituksi tai poistetaan valinta jos on klikattu valittua paikkakuntaa
         if (this.state.avattuValikko === paikkakunta) {
           this.setState({avattuValikko: null})
         } else {
@@ -26,6 +27,7 @@ class Suosikit extends PureComponent {
           return (<div key={`suosikki_${suosikki}`}>
             <Suosikki paikkakunta={suosikki} handleSuosikkiClick={this.handleSuosikkiClick} />
             {this.state.avattuValikko === suosikki ?
+              // Renderöidään valikko suosikkikomponentin alle jos kyseinen paikkakunta on valittuna
               <Valikko
                 paikkakunta={suosikki}
                 handleValikkoSelect={handleValikkoSelect}

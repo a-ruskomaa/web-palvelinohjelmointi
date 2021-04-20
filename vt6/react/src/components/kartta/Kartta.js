@@ -12,7 +12,6 @@ class Kartta extends PureComponent {
         const {
             markerLatLon,
             centerLatLon,
-            paikkakunta,
             onKarttaDblClick,
         } = this.props;
 
@@ -33,7 +32,6 @@ class Kartta extends PureComponent {
                         <Paikkakunta
                             markerLatLon={markerLatLon}
                             centerLatLon={centerLatLon}
-                            paikkakunta={paikkakunta}
                             onKarttaDblClick={onKarttaDblClick}
                         />
                     </MapContainer>

@@ -8,6 +8,10 @@ class Havaintotaulukko extends PureComponent {
     render() {
         const {paikkakunnat, havainnot} = this.props;
 
+        /*
+        * Näytetään taulukossa mittaushavainnot, tai "NA" jos havaintotaulukon indeksissä ei ole dataa tai kyseisen
+        * anturin mittausdataa ei ole saatavilla
+        */ 
         return (
             <table className="havaintotaulukko">
                 <tbody>
